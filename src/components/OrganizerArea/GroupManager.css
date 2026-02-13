@@ -1,0 +1,265 @@
+/* Group Manager Dialog */
+.group-manager-dialog {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 550px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.dialog-header h3 {
+  margin: 0 0 4px 0;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.dialog-header .event-name {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 24px;
+  border-bottom: 1px solid #f5c6cb;
+}
+
+.groups-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.no-groups {
+  text-align: center;
+  padding: 20px;
+}
+
+.no-groups p {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.no-groups .hint {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.group-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-item .group-name {
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 2px;
+}
+
+.group-item .group-time {
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.group-capacity-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 120px;
+}
+
+.capacity-bar-small {
+  width: 60px;
+  height: 6px;
+  background: #ecf0f1;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.capacity-bar-small .capacity-fill {
+  height: 100%;
+  background: #3498db;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.capacity-bar-small .capacity-fill.full {
+  background: #e74c3c;
+}
+
+.group-capacity-info .capacity-text {
+  font-size: 13px;
+  color: #7f8c8d;
+  white-space: nowrap;
+}
+
+.group-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.group-actions .action-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.group-actions .action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Group Form */
+.group-form {
+  padding: 24px;
+}
+
+.group-form h4 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.group-form .form-group {
+  margin-bottom: 16px;
+}
+
+.group-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.group-form .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.group-form .form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.group-form .form-group input[type="number"] {
+  width: 120px;
+}
+
+.group-form .field-hint {
+  display: block;
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 4px;
+}
+
+.group-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+/* Buttons */
+.group-manager-dialog .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.group-manager-dialog .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.group-manager-dialog .btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.group-manager-dialog .btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.group-manager-dialog .btn-secondary {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.group-manager-dialog .btn-secondary:hover:not(:disabled) {
+  background: #bdc3c7;
+}
+
+.group-manager-dialog .action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.group-manager-dialog .action-btn.edit {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.group-manager-dialog .action-btn.edit:hover {
+  background: #3498db;
+  color: white;
+}
+
+.group-manager-dialog .action-btn.delete {
+  background: #fdf2f2;
+  color: #e74c3c;
+}
+
+.group-manager-dialog .action-btn.delete:hover:not(:disabled) {
+  background: #e74c3c;
+  color: white;
+}

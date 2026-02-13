@@ -1,0 +1,515 @@
+.organizer-area {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.organizer-area h2 {
+  margin-bottom: 24px;
+  color: #2c3e50;
+}
+
+.organizer-area h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+/* Scope Info Section */
+.scope-info-section {
+  background: linear-gradient(135deg, #fff 0%, #fef9e7 100%);
+  border: 1px solid #f39c12;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.scope-details {
+  margin-bottom: 16px;
+}
+
+.scope-details p {
+  margin: 0 0 8px 0;
+  color: #666;
+}
+
+.admin-notice {
+  color: #e74c3c !important;
+  font-size: 15px;
+}
+
+.organizer-units {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.organizer-units li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.scope-summary {
+  display: flex;
+  gap: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.scope-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f39c12;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+/* Member Management */
+.member-management {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-controls label {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.filter-controls select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+/* Members Table */
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th,
+.members-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.members-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  font-size: 13px;
+  color: #7f8c8d;
+  text-transform: uppercase;
+}
+
+.members-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.member-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.member-email {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.member-orgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.org-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.org-tag.level-federal { background: #3498db; color: white; }
+.org-tag.level-state { background: #9b59b6; color: white; }
+.org-tag.level-region { background: #e67e22; color: white; }
+.org-tag.level-district { background: #27ae60; color: white; }
+.org-tag.level-hegering { background: #95a5a6; color: white; }
+
+.member-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn.view {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.action-btn.view:hover {
+  background: #bdc3c7;
+}
+
+.action-btn.edit {
+  background: #3498db;
+  color: white;
+}
+
+.action-btn.edit:hover {
+  background: #2980b9;
+}
+
+.empty-state {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 40px !important;
+}
+
+/* Scope Rules */
+.scope-rules {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.rules-content ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rules-content li {
+  margin-bottom: 12px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.rules-content li strong {
+  color: #2c3e50;
+}
+
+/* Level badges (reuse from other components) */
+.level-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.level-federal { background: #3498db; color: white; }
+.level-state { background: #9b59b6; color: white; }
+.level-region { background: #e67e22; color: white; }
+.level-district { background: #27ae60; color: white; }
+.level-hegering { background: #95a5a6; color: white; }
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #7f8c8d;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #3498db;
+}
+
+.tab-btn.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+/* Event Management Section */
+.event-management {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.empty-state-box {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state-box p {
+  margin: 0 0 16px 0;
+  color: #7f8c8d;
+}
+
+.event-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-management-card {
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.event-card-title h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.event-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draft-badge {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.groups-badge {
+  background: #e8f4fc;
+  color: #2980b9;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.view-link {
+  color: #3498db;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.view-link:hover {
+  text-decoration: underline;
+}
+
+.event-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-item {
+  display: flex;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.detail-item .detail-label {
+  color: #7f8c8d;
+}
+
+.detail-item .detail-value {
+  color: #2c3e50;
+}
+
+.event-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn.groups {
+  background: #e8f4fc;
+  color: #2980b9;
+}
+
+.action-btn.groups:hover {
+  background: #3498db;
+  color: white;
+}
+
+.action-btn.roles {
+  background: #f5eef8;
+  color: #8e44ad;
+}
+
+.action-btn.roles:hover {
+  background: #9b59b6;
+  color: white;
+}
+
+.action-btn.delete {
+  background: #fdf2f2;
+  color: #e74c3c;
+}
+
+.action-btn.delete:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Dialog Overlay */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.dialog h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+}
+
+.dialog p {
+  margin: 0 0 24px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.btn-secondary {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #bdc3c7;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+/* Scope Tag */
+.scope-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.scope-tag.level-federal { background: #e8f4fc; color: #2980b9; }
+.scope-tag.level-state { background: #f5eef8; color: #8e44ad; }
+.scope-tag.level-region { background: #fef5e7; color: #d35400; }
+.scope-tag.level-district { background: #e9f7ef; color: #1e8449; }
+.scope-tag.level-hegering { background: #f4f6f6; color: #5d6d7e; }
