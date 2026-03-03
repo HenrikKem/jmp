@@ -113,7 +113,7 @@ const filterableQualifications = [
 ];
 
 function MemberManagement() {
-  const { getManagedScope, isAdmin } = useAuth();
+  const { getManagedScope } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [orgUnitFilter, setOrgUnitFilter] = useState('all');
