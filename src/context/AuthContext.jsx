@@ -1,10 +1,71 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import {
   currentUser as initialUser,
   orgUnits,
   getDescendants,
   buildOrgUnitMap
 } from '../data/mockData';
+
+/**
+ * Demo Users for Role Switching
+ */
+const demoUsers = {
+  member: {
+    id: 'user-demo-member',
+    email: 'mitglied@example.com',
+    isAdmin: false,
+    profile: {
+      phone: '+49 111 111111',
+      street: 'Mitgliedstraße 1',
+      city: 'Münster',
+      postalCode: '48149',
+      country: 'Germany',
+      dateOfBirth: '1990-05-20',
+      gender: 'female',
+      huntingLicenseDate: '2015-03-01',
+    },
+    memberships: [
+      { orgUnitId: 'hegering-ms-nord', role: 'member' },
+    ],
+  },
+  organizer: {
+    id: 'user-demo-organizer',
+    email: 'organisator@example.com',
+    isAdmin: false,
+    profile: {
+      phone: '+49 222 222222',
+      street: 'Organisatorweg 2',
+      city: 'Münster',
+      postalCode: '48149',
+      country: 'Germany',
+      dateOfBirth: '1985-03-15',
+      gender: 'male',
+      huntingLicenseDate: '2010-06-01',
+    },
+    memberships: [
+      { orgUnitId: 'hegering-ms-nord', role: 'member' },
+      { orgUnitId: 'hegering-ms-sued', role: 'organizer' },
+    ],
+  },
+  admin: {
+    id: 'user-demo-admin',
+    email: 'admin@example.com',
+    isAdmin: true,
+    profile: {
+      phone: '+49 333 333333',
+      street: 'Adminplatz 3',
+      city: 'Berlin',
+      postalCode: '10115',
+      country: 'Germany',
+      dateOfBirth: '1980-01-01',
+      gender: 'male',
+      huntingLicenseDate: '2005-01-01',
+    },
+    memberships: [
+      { orgUnitId: 'federal-1', role: 'organizer' },
+    ],
+  },
+};
 
 /**
  * AuthContext
@@ -105,6 +166,18 @@ export function AuthProvider({ children }) {
       }));
     };
 
+    // Update user profile data
+    const updateProfile = (profileData) => {
+      setUser(prev => ({
+        ...prev,
+        email: profileData.email || prev.email,
+        profile: {
+          ...prev.profile,
+          ...profileData.profile
+        }
+      }));
+    };
+
     return {
       user,
       setUser,
@@ -127,11 +200,22 @@ export function AuthProvider({ children }) {
 
       // Actions
       updateMemberships,
+      updateProfile,
+
+      // Demo mode
+      demoUsers,
     };
   }, [user]);
 
+  // Switch demo role
+  const switchDemoRole = useCallback((role) => {
+    if (demoUsers[role]) {
+      setUser(demoUsers[role]);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={authValue}>
+    <AuthContext.Provider value={{ ...authValue, switchDemoRole }}>
       {children}
     </AuthContext.Provider>
   );

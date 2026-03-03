@@ -3,8 +3,15 @@
   margin: 0 auto;
 }
 
-.admin-area h2 {
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 24px;
+}
+
+.admin-header h2 {
+  margin: 0;
   color: #2c3e50;
 }
 
@@ -268,68 +275,39 @@
   opacity: 1;
 }
 
-/* Role Cards */
-.role-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+/* Hint popover role content */
+.hint-admin-role {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
 }
 
-.role-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+.hint-admin-role:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
-.role-header {
-  padding: 16px;
+.hint-admin-role-name {
+  font-size: 12px;
+  font-weight: 600;
   color: white;
-}
-
-.role-header h4 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.role-header.member {
-  background: #95a5a6;
-}
-
-.role-header.organizer {
-  background: #f39c12;
-}
-
-.role-header.admin {
-  background: #e74c3c;
-}
-
-.role-body {
-  padding: 16px;
-}
-
-.role-body p {
-  margin: 0 0 12px 0;
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.role-body ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.role-body li {
+  padding: 3px 10px;
+  border-radius: 12px;
+  display: inline-block;
   margin-bottom: 6px;
-  font-size: 14px;
-  color: #2c3e50;
 }
 
-.scope-note {
-  margin-top: 12px;
-  padding: 8px 12px;
+.hint-admin-role-name.member { background: #95a5a6; }
+.hint-admin-role-name.organizer { background: #f39c12; }
+.hint-admin-role-name.admin { background: #e74c3c; }
+
+.hint-scope-note {
+  margin-top: 8px;
+  padding: 6px 10px;
   background: #fef9e7;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   color: #856404;
 }
 

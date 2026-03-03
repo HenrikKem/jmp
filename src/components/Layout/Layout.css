@@ -169,3 +169,61 @@
 .role-info-box li.active::before {
   content: '✓ ';
 }
+
+/* Demo Role Switcher */
+.demo-role-switcher {
+  margin: 20px 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-role-switcher h4 {
+  margin: 0 0 12px 0;
+  font-size: 11px;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-switch-btn {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #bdc3c7;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.role-switch-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.role-switch-btn.active {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+  font-weight: 500;
+}
+
+.demo-hint {
+  margin: 12px 0 0 0;
+  font-size: 11px;
+  color: #7f8c8d;
+}
+
+.demo-hint strong {
+  color: #95a5a6;
+}

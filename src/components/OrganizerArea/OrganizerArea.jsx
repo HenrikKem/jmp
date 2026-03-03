@@ -6,6 +6,7 @@ import { orgUnits, orgUnitLevels } from '../../data/mockData';
 import EventForm from './EventForm';
 import GroupManager from './GroupManager';
 import RoleManager from './RoleManager';
+import HintButton from '../HintButton/HintButton';
 import './OrganizerArea.css';
 
 /**
@@ -19,8 +20,8 @@ import './OrganizerArea.css';
  * - All displayed data is filtered by scope
  */
 
-// Mock members for demonstration
-const mockMembers = [
+// Initial mock members for demonstration
+const initialMockMembers = [
   { id: 'user-1', email: 'max.mustermann@example.com', name: 'Max Mustermann', orgUnitIds: ['hegering-ms-nord', 'hegering-ms-sued'] },
   { id: 'user-2', email: 'anna.schmidt@example.com', name: 'Anna Schmidt', orgUnitIds: ['hegering-ms-nord'] },
   { id: 'user-3', email: 'peter.mueller@example.com', name: 'Peter Müller', orgUnitIds: ['hegering-ms-sued'] },
@@ -48,6 +49,13 @@ function OrganizerArea() {
   const [managingRolesEventId, setManagingRolesEventId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  // Member management state
+  const [members, setMembers] = useState(initialMockMembers);
+  const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
+  const [removeMemberConfirm, setRemoveMemberConfirm] = useState(null);
+  const [newMemberForm, setNewMemberForm] = useState({ name: '', email: '', orgUnitId: '' });
+  const [memberError, setMemberError] = useState(null);
+
   const managedScope = getManagedScope();
   const managedOrgUnitIds = managedScope.map(u => u.id);
 
@@ -55,7 +63,7 @@ function OrganizerArea() {
   const managedEvents = getEventsForManagement(managedOrgUnitIds);
 
   // Get members within scope
-  const membersInScope = mockMembers.filter(member =>
+  const membersInScope = members.filter(member =>
     member.orgUnitIds.some(orgId => managedOrgUnitIds.includes(orgId))
   );
 
@@ -115,9 +123,119 @@ function OrganizerArea() {
     });
   };
 
+  // Member management handlers
+  const handleAddMember = () => {
+    setNewMemberForm({ name: '', email: '', orgUnitId: managedScope[0]?.id || '' });
+    setMemberError(null);
+    setShowAddMemberDialog(true);
+  };
+
+  const handleNewMemberChange = (e) => {
+    const { name, value } = e.target;
+    setNewMemberForm(prev => ({ ...prev, [name]: value }));
+    setMemberError(null);
+  };
+
+  const handleSaveNewMember = () => {
+    // Validate
+    if (!newMemberForm.name.trim()) {
+      setMemberError('Name ist erforderlich');
+      return;
+    }
+    if (!newMemberForm.email.trim()) {
+      setMemberError('E-Mail ist erforderlich');
+      return;
+    }
+    if (!newMemberForm.orgUnitId) {
+      setMemberError('Organisationseinheit ist erforderlich');
+      return;
+    }
+
+    // Check if email already exists
+    const existingMember = members.find(m => m.email.toLowerCase() === newMemberForm.email.toLowerCase());
+    if (existingMember) {
+      // Add to existing member's orgUnits
+      if (existingMember.orgUnitIds.includes(newMemberForm.orgUnitId)) {
+        setMemberError('Mitglied ist bereits in dieser Organisationseinheit');
+        return;
+      }
+      setMembers(prev => prev.map(m =>
+        m.id === existingMember.id
+          ? { ...m, orgUnitIds: [...m.orgUnitIds, newMemberForm.orgUnitId] }
+          : m
+      ));
+    } else {
+      // Create new member
+      const newMember = {
+        id: `user-${Date.now()}`,
+        name: newMemberForm.name.trim(),
+        email: newMemberForm.email.trim(),
+        orgUnitIds: [newMemberForm.orgUnitId],
+      };
+      setMembers(prev => [...prev, newMember]);
+    }
+
+    setShowAddMemberDialog(false);
+    setNewMemberForm({ name: '', email: '', orgUnitId: '' });
+  };
+
+  const handleRemoveMemberFromOrg = (memberId, orgUnitId) => {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    // If member only belongs to this org, remove them entirely
+    if (member.orgUnitIds.length === 1) {
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+    } else {
+      // Remove just this org from member
+      setMembers(prev => prev.map(m =>
+        m.id === memberId
+          ? { ...m, orgUnitIds: m.orgUnitIds.filter(id => id !== orgUnitId) }
+          : m
+      ));
+    }
+    setRemoveMemberConfirm(null);
+  };
+
   return (
     <div className="organizer-area">
-      <h2>Organizer-Bereich</h2>
+      <div className="organizer-header">
+        <h2>Organizer-Bereich</h2>
+        <HintButton title="Scope-Information">
+          {isAdmin ? (
+            <p style={{ color: '#e74c3c' }}>
+              Als <strong>Administrator</strong> haben Sie Zugriff auf alle Organisationseinheiten.
+            </p>
+          ) : (
+            <>
+              <p>Sie sind Organisator für:</p>
+              <ul className="hint-organizer-units">
+                {organizerOrgUnitIds.map(orgId => {
+                  const unit = getOrgUnitById(orgId);
+                  if (!unit) return null;
+                  return (
+                    <li key={orgId}>
+                      <span className={`level-badge level-${unit.level}`}>
+                        {orgUnitLevels[unit.level]?.name}
+                      </span>
+                      {unit.name}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+          <div className="hint-scope-rules">
+            <strong>Scope-Regeln:</strong>
+            <ul>
+              <li><strong>Hierarchie:</strong> Ihr Scope umfasst Ihre zugewiesene(n) Organisationseinheit(en) und alle darunterliegenden Einheiten.</li>
+              <li><strong>Mehrfach-Scope:</strong> Sie können Organisator für mehrere Einheiten sein.</li>
+              <li><strong>Event-Verwaltung:</strong> Sie können Events erstellen, deren Geltungsbereich in Ihrem Scope liegt.</li>
+              <li><strong>Sichtbarkeit:</strong> Events und Mitglieder außerhalb Ihres Scopes werden nicht angezeigt.</li>
+            </ul>
+          </div>
+        </HintButton>
+      </div>
 
       {/* Tab Navigation */}
       <div className="tab-navigation">
@@ -132,12 +250,6 @@ function OrganizerArea() {
           onClick={() => setActiveTab('members')}
         >
           Mitglieder ({membersInScope.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'scope' ? 'active' : ''}`}
-          onClick={() => setActiveTab('scope')}
-        >
-          Scope-Info
         </button>
       </div>
 
@@ -300,25 +412,30 @@ function OrganizerArea() {
         <section className="member-management">
           <div className="section-header">
             <h3>Mitgliederverwaltung</h3>
-            <div className="filter-controls">
-              <label htmlFor="org-filter">Filtern nach:</label>
-              <select
-                id="org-filter"
-                value={selectedOrgUnit}
-                onChange={(e) => setSelectedOrgUnit(e.target.value)}
-              >
-                <option value="all">Alle ({membersInScope.length})</option>
-                {managedScope.map(unit => {
-                  const memberCount = membersInScope.filter(m =>
-                    m.orgUnitIds.includes(unit.id)
-                  ).length;
-                  return (
-                    <option key={unit.id} value={unit.id}>
-                      {unit.name} ({memberCount})
-                    </option>
-                  );
-                })}
-              </select>
+            <div className="header-actions">
+              <button className="btn btn-primary" onClick={handleAddMember}>
+                + Mitglied hinzufügen
+              </button>
+              <div className="filter-controls">
+                <label htmlFor="org-filter">Filtern nach:</label>
+                <select
+                  id="org-filter"
+                  value={selectedOrgUnit}
+                  onChange={(e) => setSelectedOrgUnit(e.target.value)}
+                >
+                  <option value="all">Alle ({membersInScope.length})</option>
+                  {managedScope.map(unit => {
+                    const memberCount = membersInScope.filter(m =>
+                      m.orgUnitIds.includes(unit.id)
+                    ).length;
+                    return (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name} ({memberCount})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -350,96 +467,137 @@ function OrganizerArea() {
                           const unit = getOrgUnitById(orgId);
                           if (!unit) return null;
                           return (
-                            <span key={orgId} className={`org-tag level-${unit.level}`}>
+                            <span key={orgId} className={`org-tag-with-remove level-${unit.level}`}>
                               {unit.name}
+                              <button
+                                className="remove-org-btn"
+                                onClick={() => setRemoveMemberConfirm({ member, orgUnitId: orgId, orgName: unit.name })}
+                                title="Aus dieser Einheit entfernen"
+                              >
+                                ×
+                              </button>
                             </span>
                           );
                         })}
                     </td>
                     <td className="member-actions">
                       <button className="action-btn view">Anzeigen</button>
-                      <button className="action-btn edit">Bearbeiten</button>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+
+          {/* Add Member Dialog */}
+          {showAddMemberDialog && (
+            <div className="dialog-overlay" onClick={() => setShowAddMemberDialog(false)}>
+              <div className="dialog" onClick={e => e.stopPropagation()}>
+                <h3>Mitglied hinzufügen</h3>
+
+                {memberError && (
+                  <div className="dialog-error">{memberError}</div>
+                )}
+
+                <div className="dialog-form">
+                  <div className="form-group">
+                    <label htmlFor="member-name">Name *</label>
+                    <input
+                      type="text"
+                      id="member-name"
+                      name="name"
+                      value={newMemberForm.name}
+                      onChange={handleNewMemberChange}
+                      placeholder="z.B. Hans Meyer"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="member-email">E-Mail *</label>
+                    <input
+                      type="email"
+                      id="member-email"
+                      name="email"
+                      value={newMemberForm.email}
+                      onChange={handleNewMemberChange}
+                      placeholder="z.B. hans.meyer@example.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="member-org">Organisationseinheit *</label>
+                    <select
+                      id="member-org"
+                      name="orgUnitId"
+                      value={newMemberForm.orgUnitId}
+                      onChange={handleNewMemberChange}
+                    >
+                      <option value="">-- Bitte wählen --</option>
+                      {managedScope.map(unit => (
+                        <option key={unit.id} value={unit.id}>
+                          {orgUnitLevels[unit.level]?.name}: {unit.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="dialog-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowAddMemberDialog(false)}
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSaveNewMember}
+                  >
+                    Hinzufügen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Remove Member Confirmation */}
+          {removeMemberConfirm && (
+            <div className="dialog-overlay" onClick={() => setRemoveMemberConfirm(null)}>
+              <div className="dialog" onClick={e => e.stopPropagation()}>
+                <h3>Mitglied entfernen?</h3>
+                <p>
+                  Möchten Sie <strong>{removeMemberConfirm.member.name}</strong> aus{' '}
+                  <strong>{removeMemberConfirm.orgName}</strong> entfernen?
+                </p>
+                {removeMemberConfirm.member.orgUnitIds.length === 1 && (
+                  <p className="warning-text">
+                    Hinweis: Dies ist die einzige Organisationseinheit des Mitglieds.
+                    Das Mitglied wird vollständig entfernt.
+                  </p>
+                )}
+                <div className="dialog-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setRemoveMemberConfirm(null)}
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleRemoveMemberFromOrg(
+                      removeMemberConfirm.member.id,
+                      removeMemberConfirm.orgUnitId
+                    )}
+                  >
+                    Entfernen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
-      {/* Scope Info Tab */}
-      {activeTab === 'scope' && (
-        <>
-          <section className="scope-info-section">
-            <h3>Ihr Verwaltungsbereich</h3>
-            <div className="scope-details">
-              {isAdmin ? (
-                <p className="admin-notice">
-                  Als <strong>Administrator</strong> haben Sie Zugriff auf alle Organisationseinheiten.
-                </p>
-              ) : (
-                <>
-                  <p>Sie sind Organisator für:</p>
-                  <ul className="organizer-units">
-                    {organizerOrgUnitIds.map(orgId => {
-                      const unit = getOrgUnitById(orgId);
-                      if (!unit) return null;
-                      return (
-                        <li key={orgId}>
-                          <span className={`level-badge level-${unit.level}`}>
-                            {orgUnitLevels[unit.level]?.name}
-                          </span>
-                          {unit.name}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              )}
-            </div>
-
-            <div className="scope-summary">
-              <div className="scope-stat">
-                <span className="stat-value">{managedScope.length}</span>
-                <span className="stat-label">Einheiten im Scope</span>
-              </div>
-              <div className="scope-stat">
-                <span className="stat-value">{membersInScope.length}</span>
-                <span className="stat-label">Mitglieder</span>
-              </div>
-              <div className="scope-stat">
-                <span className="stat-value">{managedEvents.length}</span>
-                <span className="stat-label">Events</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="scope-rules">
-            <h3>Scope-Regeln</h3>
-            <div className="rules-content">
-              <ul>
-                <li>
-                  <strong>Hierarchie:</strong> Ihr Scope umfasst Ihre zugewiesene(n)
-                  Organisationseinheit(en) und alle darunterliegenden Einheiten.
-                </li>
-                <li>
-                  <strong>Mehrfach-Scope:</strong> Sie können Organisator für mehrere
-                  Einheiten sein (z.B. mehrere Hegeringe).
-                </li>
-                <li>
-                  <strong>Event-Verwaltung:</strong> Sie können Events erstellen,
-                  deren Geltungsbereich in Ihrem Scope liegt.
-                </li>
-                <li>
-                  <strong>Sichtbarkeit:</strong> Events und Mitglieder außerhalb
-                  Ihres Scopes werden nicht angezeigt.
-                </li>
-              </ul>
-            </div>
-          </section>
-        </>
-      )}
     </div>
   );
 }

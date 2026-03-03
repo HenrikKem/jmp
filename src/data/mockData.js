@@ -409,6 +409,282 @@ export const initialRegistrations = [
   // group-4a is now FULL (5/5)
 ];
 
+/**
+ * Qualification labels (German display names)
+ */
+export const qualificationLabels = {
+  jagdpaechter: 'Jagdpächter',
+  begegnungsscheininhaber: 'Begegnungsscheininhaber',
+  hundefuehrer: 'Hundeführer',
+  hundpruefungsarten: 'Hundprüfungsarten',
+  bestaetigterJagdaufseher: 'Bestätigter Jagdaufseher',
+  fallenlehrgang: 'Fallenlehrgang',
+  jagdhorn: 'Jagdhorn',
+  drohnenfuehrerschein: 'Drohnenführerschein',
+  schiessleistungsnadel: 'Schießleistungsnadel',
+  aktivMitglied: 'Aktives Mitglied',
+};
+
+/**
+ * Dog test types for Hundprüfungsarten multi-select
+ */
+export const hundpruefungsartenOptions = [
+  'VJP', 'HZP', 'VGP', 'VSwP', 'Btr', 'Sw/K', 'Spur/F',
+];
+
+/**
+ * Mock Members with enriched data for Member Management
+ *
+ * Fields:
+ * - membershipDates: { orgUnitId: 'YYYY-MM-DD' } — when user joined each OrgUnit
+ * - firstHuntingLicenseDate: date of first hunting license
+ * - qualifications: boolean flags + multi-select for hunting qualifications
+ */
+export const mockMembers = [
+  {
+    id: 'user-1',
+    name: 'Max Mustermann',
+    email: 'max.mustermann@example.com',
+    phone: '+49 123 456789',
+    orgUnitIds: ['hegering-ms-nord', 'hegering-ms-sued'],
+    membershipDates: {
+      'hegering-ms-nord': '2012-04-01',
+      'hegering-ms-sued': '2018-01-15',
+      'state-nrw': '2012-04-01',
+    },
+    firstHuntingLicenseDate: '2010-06-01',
+    qualifications: {
+      jagdpaechter: true,
+      begegnungsscheininhaber: false,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VGP', 'VSwP'],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: true,
+      jagdhorn: false,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: 'gold',
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-2',
+    name: 'Anna Schmidt',
+    email: 'anna.schmidt@example.com',
+    phone: '+49 234 567890',
+    orgUnitIds: ['hegering-ms-nord'],
+    membershipDates: {
+      'hegering-ms-nord': '2019-09-01',
+      'state-nrw': '2019-09-01',
+    },
+    firstHuntingLicenseDate: '2018-03-15',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: false,
+      hundefuehrer: false,
+      hundpruefungsarten: [],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: false,
+      jagdhorn: true,
+      drohnenfuehrerschein: true,
+      schiessleistungsnadel: null,
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-3',
+    name: 'Peter Müller',
+    email: 'peter.mueller@example.com',
+    phone: '+49 345 678901',
+    orgUnitIds: ['hegering-ms-sued'],
+    membershipDates: {
+      'hegering-ms-sued': '2005-03-01',
+      'state-nrw': '2005-03-01',
+    },
+    firstHuntingLicenseDate: '2000-09-01',
+    qualifications: {
+      jagdpaechter: true,
+      begegnungsscheininhaber: true,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VJP', 'HZP', 'VGP'],
+      bestaetigterJagdaufseher: true,
+      fallenlehrgang: true,
+      jagdhorn: true,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: 'silber',
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-4',
+    name: 'Lisa Weber',
+    email: 'lisa.weber@example.com',
+    phone: '+49 456 789012',
+    orgUnitIds: ['hegering-do-mitte'],
+    membershipDates: {
+      'hegering-do-mitte': '2020-06-15',
+      'state-nrw': '2020-06-15',
+    },
+    firstHuntingLicenseDate: '2019-11-01',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: false,
+      hundefuehrer: false,
+      hundpruefungsarten: [],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: false,
+      jagdhorn: false,
+      drohnenfuehrerschein: true,
+      schiessleistungsnadel: null,
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-5',
+    name: 'Thomas Braun',
+    email: 'thomas.braun@example.com',
+    phone: '+49 567 890123',
+    orgUnitIds: ['hegering-koeln-ost'],
+    membershipDates: {
+      'hegering-koeln-ost': '2008-01-10',
+      'state-nrw': '2008-01-10',
+    },
+    firstHuntingLicenseDate: '2005-04-01',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: true,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VJP', 'Btr'],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: true,
+      jagdhorn: false,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: 'bronze',
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-6',
+    name: 'Julia Klein',
+    email: 'julia.klein@example.com',
+    phone: '+49 678 901234',
+    orgUnitIds: ['district-muenster'],
+    membershipDates: {
+      'district-muenster': '2017-05-01',
+      'state-nrw': '2017-05-01',
+    },
+    firstHuntingLicenseDate: '2015-08-01',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: false,
+      hundefuehrer: false,
+      hundpruefungsarten: [],
+      bestaetigterJagdaufseher: true,
+      fallenlehrgang: true,
+      jagdhorn: true,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: null,
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-7',
+    name: 'Heinrich Förster',
+    email: 'heinrich.foerster@example.com',
+    phone: '+49 789 012345',
+    orgUnitIds: ['hegering-ms-nord'],
+    membershipDates: {
+      'hegering-ms-nord': '1998-02-01',
+      'state-nrw': '1998-02-01',
+    },
+    firstHuntingLicenseDate: '1990-05-15',
+    qualifications: {
+      jagdpaechter: true,
+      begegnungsscheininhaber: true,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VJP', 'HZP', 'VGP', 'VSwP', 'Btr'],
+      bestaetigterJagdaufseher: true,
+      fallenlehrgang: true,
+      jagdhorn: true,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: 'gold',
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-8',
+    name: 'Sabine Richter',
+    email: 'sabine.richter@example.com',
+    phone: '+49 890 123456',
+    orgUnitIds: ['hegering-ms-sued'],
+    membershipDates: {
+      'hegering-ms-sued': '2021-11-01',
+      'state-nrw': '2021-11-01',
+    },
+    firstHuntingLicenseDate: '2021-09-15',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: false,
+      hundefuehrer: false,
+      hundpruefungsarten: [],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: false,
+      jagdhorn: false,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: null,
+      aktivMitglied: true,
+    },
+  },
+  {
+    id: 'user-9',
+    name: 'Karl Weidmann',
+    email: 'karl.weidmann@example.com',
+    phone: '+49 901 234567',
+    orgUnitIds: ['hegering-ms-nord', 'district-muenster'],
+    membershipDates: {
+      'hegering-ms-nord': '2010-07-01',
+      'district-muenster': '2015-01-01',
+      'state-nrw': '2010-07-01',
+    },
+    firstHuntingLicenseDate: '2008-03-01',
+    qualifications: {
+      jagdpaechter: true,
+      begegnungsscheininhaber: false,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VGP', 'Sw/K'],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: true,
+      jagdhorn: false,
+      drohnenfuehrerschein: true,
+      schiessleistungsnadel: 'silber',
+      aktivMitglied: false,
+    },
+  },
+  {
+    id: 'user-10',
+    name: 'Maria Jäger',
+    email: 'maria.jaeger@example.com',
+    phone: '+49 012 345678',
+    orgUnitIds: ['hegering-muc-zentrum'],
+    membershipDates: {
+      'hegering-muc-zentrum': '2016-03-01',
+      'state-bayern': '2016-03-01',
+    },
+    firstHuntingLicenseDate: '2014-06-01',
+    qualifications: {
+      jagdpaechter: false,
+      begegnungsscheininhaber: false,
+      hundefuehrer: true,
+      hundpruefungsarten: ['VJP', 'HZP'],
+      bestaetigterJagdaufseher: false,
+      fallenlehrgang: false,
+      jagdhorn: true,
+      drohnenfuehrerschein: false,
+      schiessleistungsnadel: 'bronze',
+      aktivMitglied: true,
+    },
+  },
+];
+
 // Mock current user
 export const currentUser = {
   id: 'user-1',

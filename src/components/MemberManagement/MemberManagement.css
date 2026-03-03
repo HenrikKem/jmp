@@ -1,0 +1,252 @@
+.member-mgmt {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.member-mgmt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.member-mgmt-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.member-mgmt-scope-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.scope-chip {
+  background: #e8f4fc;
+  color: #2980b9;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+/* Toolbar */
+.member-mgmt-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.member-mgmt-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.member-mgmt-search:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.member-mgmt-filter {
+  padding: 9px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 160px;
+  background: white;
+}
+
+.member-mgmt-filter:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Actions row (results count + export) */
+.member-mgmt-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.member-mgmt-results {
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.btn-export {
+  padding: 7px 14px;
+  border: 1px solid #3498db;
+  border-radius: 6px;
+  background: white;
+  color: #3498db;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: #3498db;
+  color: white;
+}
+
+.btn-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-message {
+  background: #e9f7ef;
+  color: #1e8449;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* Table wrapper for horizontal scroll */
+.member-mgmt-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+
+/* Table */
+.member-mgmt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.member-mgmt-table th,
+.member-mgmt-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.member-mgmt-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  font-size: 12px;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.member-mgmt-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.member-mgmt-table th.sortable:hover {
+  color: #3498db;
+}
+
+.member-mgmt-table th.num,
+.member-mgmt-table td.col-num {
+  text-align: center;
+}
+
+.member-mgmt-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.member-mgmt-table tbody tr.inactive-row {
+  opacity: 0.6;
+}
+
+.member-mgmt-empty {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 40px 12px !important;
+}
+
+/* Column styles */
+.col-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.col-phone,
+.col-email {
+  color: #555;
+  font-size: 13px;
+}
+
+.col-orgs {
+  white-space: normal !important;
+}
+
+.col-tags {
+  white-space: normal !important;
+  max-width: 280px;
+}
+
+/* Org badges */
+.org-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  margin: 1px 2px;
+}
+
+.org-badge.level-federal { background: #3498db; color: white; }
+.org-badge.level-state { background: #9b59b6; color: white; }
+.org-badge.level-region { background: #e67e22; color: white; }
+.org-badge.level-district { background: #27ae60; color: white; }
+.org-badge.level-hegering { background: #95a5a6; color: white; }
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: #e9f7ef;
+  color: #1e8449;
+}
+
+.status-badge.inactive {
+  background: #fdf2f2;
+  color: #e74c3c;
+}
+
+/* Qualification tags */
+.qual-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  color: #444;
+  margin: 1px 2px;
+  white-space: nowrap;
+}
+
+.no-tags {
+  color: #bdc3c7;
+}

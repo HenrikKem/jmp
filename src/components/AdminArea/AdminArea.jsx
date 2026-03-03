@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { orgUnits, orgUnitLevels } from '../../data/mockData';
+import HintButton from '../HintButton/HintButton';
 import './AdminArea.css';
 
 /**
@@ -29,7 +30,45 @@ function AdminArea() {
 
   return (
     <div className="admin-area">
-      <h2>Admin-Bereich</h2>
+      <div className="admin-header">
+        <h2>Admin-Bereich</h2>
+        <HintButton title="Rollenverwaltung">
+          <div className="hint-admin-role">
+            <div className="hint-admin-role-name member">Mitglied</div>
+            <p>Basisrolle für alle Benutzer</p>
+            <ul>
+              <li>Eigenes Profil verwalten</li>
+              <li>Berechtigte Events ansehen</li>
+              <li>Für Events anmelden/abmelden</li>
+              <li>Eigene Anmeldungen verwalten</li>
+            </ul>
+          </div>
+          <div className="hint-admin-role">
+            <div className="hint-admin-role-name organizer">Organisator</div>
+            <p>Scope-basierte Verwaltungsrolle</p>
+            <ul>
+              <li>Alle Mitglied-Rechte</li>
+              <li>Mitglieder im Scope verwalten</li>
+              <li>Events im Scope erstellen/verwalten</li>
+              <li>Event-Rollen zuweisen</li>
+            </ul>
+            <div className="hint-scope-note">
+              <strong>Scope:</strong> Zugewiesene OrgUnit(s) + alle Nachfahren
+            </div>
+          </div>
+          <div className="hint-admin-role">
+            <div className="hint-admin-role-name admin">Administrator</div>
+            <p>Globale Verwaltungsrolle</p>
+            <ul>
+              <li>Alle Organisator-Rechte</li>
+              <li>Keine Scope-Einschränkungen</li>
+              <li>Benutzer erstellen/deaktivieren</li>
+              <li>Organisationsstruktur verwalten</li>
+              <li>Rollen zuweisen</li>
+            </ul>
+          </div>
+        </HintButton>
+      </div>
 
       <div className="admin-warning">
         <span className="warning-icon">⚠️</span>
@@ -52,18 +91,11 @@ function AdminArea() {
         >
           Organisationsstruktur
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
-          onClick={() => setActiveTab('roles')}
-        >
-          Rollenverwaltung
-        </button>
       </div>
 
       <div className="tab-content">
         {activeTab === 'users' && <UsersTab />}
         {activeTab === 'orgs' && <OrgsTab />}
-        {activeTab === 'roles' && <RolesTab />}
       </div>
     </div>
   );
@@ -151,65 +183,6 @@ function OrgsTab() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function RolesTab() {
-  return (
-    <div className="admin-section">
-      <h3>Rollenmodell</h3>
-
-      <div className="role-cards">
-        <div className="role-card">
-          <div className="role-header member">
-            <h4>Mitglied</h4>
-          </div>
-          <div className="role-body">
-            <p>Basisrolle für alle Benutzer</p>
-            <ul>
-              <li>Eigenes Profil verwalten</li>
-              <li>Berechtigte Events ansehen</li>
-              <li>Für Events anmelden/abmelden</li>
-              <li>Eigene Anmeldungen verwalten</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="role-card">
-          <div className="role-header organizer">
-            <h4>Organisator</h4>
-          </div>
-          <div className="role-body">
-            <p>Scope-basierte Verwaltungsrolle</p>
-            <ul>
-              <li>Alle Mitglied-Rechte</li>
-              <li>Mitglieder im Scope verwalten</li>
-              <li>Events im Scope erstellen/verwalten</li>
-              <li>Event-Rollen zuweisen</li>
-            </ul>
-            <div className="scope-note">
-              <strong>Scope:</strong> Zugewiesene OrgUnit(s) + alle Nachfahren
-            </div>
-          </div>
-        </div>
-
-        <div className="role-card">
-          <div className="role-header admin">
-            <h4>Administrator</h4>
-          </div>
-          <div className="role-body">
-            <p>Globale Verwaltungsrolle</p>
-            <ul>
-              <li>Alle Organisator-Rechte</li>
-              <li>Keine Scope-Einschränkungen</li>
-              <li>Benutzer erstellen/deaktivieren</li>
-              <li>Organisationsstruktur verwalten</li>
-              <li>Rollen zuweisen</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );

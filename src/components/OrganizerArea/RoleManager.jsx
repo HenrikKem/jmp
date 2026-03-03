@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useEvents } from '../../context/EventContext';
+import HintButton from '../HintButton/HintButton';
 import './RoleManager.css';
 
 /**
@@ -101,8 +102,18 @@ function RoleManager({ eventId, onClose }) {
     <div className="dialog-overlay" onClick={onClose}>
       <div className="role-manager-dialog" onClick={e => e.stopPropagation()}>
         <div className="dialog-header">
-          <h3>Rollen verwalten</h3>
-          <span className="event-name">{event.name}</span>
+          <div>
+            <h3>Rollen verwalten</h3>
+            <span className="event-name">{event.name}</span>
+          </div>
+          <HintButton title="Verfügbare Rollentypen" align="right">
+            {roleTypes.map(rt => (
+              <div key={rt.id} className="hint-role-type">
+                <strong>{rt.name}</strong>
+                <span>{rt.description}</span>
+              </div>
+            ))}
+          </HintButton>
         </div>
 
         {error && (
@@ -215,17 +226,7 @@ function RoleManager({ eventId, onClose }) {
                 </div>
               )}
 
-              <div className="available-roles">
-                <h4>Verfügbare Rollentypen</h4>
-                <div className="role-types-list">
-                  {roleTypes.map(rt => (
-                    <div key={rt.id} className="role-type-info">
-                      <span className="role-name">{rt.name}</span>
-                      <span className="role-desc">{rt.description}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+
             </div>
 
             <div className="dialog-footer">

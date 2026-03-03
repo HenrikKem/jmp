@@ -1,0 +1,90 @@
+.hint-button-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hint-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #3498db;
+  background: white;
+  color: #3498db;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.hint-btn:hover,
+.hint-btn.active {
+  background: #3498db;
+  color: white;
+}
+
+.hint-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 200;
+}
+
+.hint-popover--left {
+  left: 0;
+}
+
+.hint-popover--right {
+  right: 0;
+}
+
+.hint-popover--wide {
+  width: 440px;
+}
+
+.hint-popover-title {
+  padding: 12px 16px 10px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background: white;
+}
+
+.hint-popover-content {
+  padding: 12px 16px 16px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.hint-popover-content p {
+  margin: 0 0 8px 0;
+}
+
+.hint-popover-content ul {
+  margin: 0 0 8px 0;
+  padding-left: 16px;
+}
+
+.hint-popover-content li {
+  margin-bottom: 6px;
+}
+
+.hint-popover-content strong {
+  color: #2c3e50;
+}

@@ -12,6 +12,9 @@
 }
 
 .role-manager-dialog .dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 20px 24px;
   border-bottom: 1px solid #eee;
 }
@@ -135,40 +138,25 @@
   color: white;
 }
 
-/* Available Roles Info */
-.available-roles {
-  border-top: 1px solid #eee;
-  padding-top: 20px;
-}
-
-.available-roles h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  color: #7f8c8d;
-  text-transform: uppercase;
-}
-
-.role-types-list {
+/* Hint popover role type entries */
+.hint-role-type {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.role-type-info {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
+.hint-role-type:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-.role-type-info .role-name {
-  font-weight: 500;
+.hint-role-type strong {
   color: #2c3e50;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.role-type-info .role-desc {
+.hint-role-type span {
   font-size: 12px;
   color: #7f8c8d;
   margin-top: 2px;

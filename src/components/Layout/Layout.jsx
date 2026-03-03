@@ -13,7 +13,13 @@ import './Layout.css';
  * - Admin-Bereich: Admins only
  */
 function Layout() {
-  const { user, isAdmin, isOrganizer, hasOrganizerAccess, hasAdminAccess } = useAuth();
+  const { user, isAdmin, isOrganizer, hasOrganizerAccess, hasAdminAccess, switchDemoRole } = useAuth();
+
+  const getCurrentRole = () => {
+    if (user.isAdmin) return 'admin';
+    if (user.memberships?.some(m => m.role === 'organizer')) return 'organizer';
+    return 'member';
+  };
 
   return (
     <div className="layout">
@@ -61,6 +67,11 @@ function Layout() {
                   <span>Verwaltung</span>
                 </li>
                 <li>
+                  <NavLink to="/manage" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Mitgliederverwaltung
+                  </NavLink>
+                </li>
+                <li>
                   <NavLink to="/organizer" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
                     Organizer-Bereich
                   </NavLink>
@@ -78,14 +89,32 @@ function Layout() {
             )}
           </ul>
 
-          {/* Role info box */}
-          <div className="role-info-box">
-            <h4>Ihre Rollen</h4>
-            <ul>
-              <li className="active">Mitglied</li>
-              {isOrganizer && <li className="active">Organisator</li>}
-              {isAdmin && <li className="active">Administrator</li>}
-            </ul>
+          {/* Demo Role Switcher */}
+          <div className="demo-role-switcher">
+            <h4>Demo: Rolle wechseln</h4>
+            <div className="role-buttons">
+              <button
+                className={`role-switch-btn ${getCurrentRole() === 'member' ? 'active' : ''}`}
+                onClick={() => switchDemoRole('member')}
+              >
+                Mitglied
+              </button>
+              <button
+                className={`role-switch-btn ${getCurrentRole() === 'organizer' ? 'active' : ''}`}
+                onClick={() => switchDemoRole('organizer')}
+              >
+                Organisator
+              </button>
+              <button
+                className={`role-switch-btn ${getCurrentRole() === 'admin' ? 'active' : ''}`}
+                onClick={() => switchDemoRole('admin')}
+              >
+                Admin
+              </button>
+            </div>
+            <p className="demo-hint">
+              Aktiv: <strong>{user.email}</strong>
+            </p>
           </div>
         </nav>
 

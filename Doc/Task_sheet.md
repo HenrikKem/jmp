@@ -173,3 +173,33 @@ Prompt:
 > Be technology-neutral, but include PostgreSQL-oriented examples where helpful.
 > Mark unclear points as **Decision Needed** with a recommended default.
 > Assume GDPR compliance is mandatory.
+
+
+Implement the core product as **User & Club (Vereins) Management**.
+
+UI requirement:
+- The **Organizer/Admin area must be a single dedicated page/route** (e.g. `/manage`) — **not** a column/section inside another page.
+- On that page, show **all users within the organizer’s OrgUnit scope and all descendant OrgUnits** in **one table**.
+- Provide search, sorting, and filters (OrgUnit, active status, tags).
+
+Table columns / derived fields per user:
+- Basic: Name, OrgUnit(s), Phone, Email (only if permitted), Active Member
+- Derived (calculated, not manually entered unless stated):
+  - **Years with hunting license** = years since `first_hunting_license_date`
+  - **Years in Hegering** = years since membership start date in any Hegering OrgUnit
+  - **Years in State association (Landesjagdverband)** = years since membership start date in the corresponding OrgUnit
+- Attributes / qualifications (boolean or multi-select):
+  - Jagdpächter (boolean)
+  - Begegnungsscheininhaber (boolean)
+  - Hundeführer (boolean)
+  - Hundprüfungsarten (multi-select list)
+  - Bestätigter Jagdaufseher (boolean)
+  - Fallenlehrgang (boolean)
+  - Jagdhorn (boolean)
+  - Drohnenführerschein (boolean)
+  - Schießleistungsnadel (boolean; optionally level)
+  - Aktives Mitglied (boolean)
+
+Notes:
+- Define where membership start dates are stored (Decision Needed) to compute “years in …”.
+- Ensure GDPR: only show sensitive fields to Organizer/Admin within scope; log changes via audit.

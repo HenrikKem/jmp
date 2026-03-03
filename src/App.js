@@ -8,6 +8,7 @@ import Profile from './components/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import OrganizerArea from './components/OrganizerArea/OrganizerArea';
 import AdminArea from './components/AdminArea/AdminArea';
+import MemberManagement from './components/MemberManagement/MemberManagement';
 import EventList from './components/Events/EventList';
 import EventDetail from './components/Events/EventDetail';
 import './App.css';
@@ -32,6 +33,14 @@ function App() {
                 element={
                   <ProtectedRoute requireOrganizer>
                     <OrganizerArea />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="manage"
+                element={
+                  <ProtectedRoute requireOrganizer>
+                    <MemberManagement />
                   </ProtectedRoute>
                 }
               />
