@@ -1,12 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
-  orgUnits,
   orgUnitLevels,
-  mockMembers,
   qualificationLabels,
-  getAncestors,
 } from '../../data/mockData';
+import { supabase } from '../../lib/supabaseClient';
+import { useSupabaseProfile } from '../../hooks/useSupabaseProfile';
 import './MemberManagement.css';
 
 /**
@@ -25,7 +24,7 @@ import './MemberManagement.css';
  * - GDPR: sensitive fields only visible within scope
  */
 
-const getOrgUnitById = (id) => orgUnits.find(u => u.id === id);
+// getOrgUnitById is defined inside MemberManagement using orgUnits from useAuth()
 
 /** Calculate full years since a given date string */
 function calcYears(dateStr) {
@@ -38,40 +37,6 @@ function calcYears(dateStr) {
     years--;
   }
   return years;
-}
-
-/** Get years in Hegering: earliest membership date where orgUnit level is 'hegering' */
-function getHegeringYears(member) {
-  let earliest = null;
-  for (const [orgId, dateStr] of Object.entries(member.membershipDates)) {
-    const unit = getOrgUnitById(orgId);
-    if (unit && unit.level === 'hegering') {
-      if (!earliest || dateStr < earliest) earliest = dateStr;
-    }
-  }
-  return calcYears(earliest);
-}
-
-/** Get years in State association (Landesjagdverband) */
-function getStateYears(member) {
-  let earliest = null;
-  for (const [orgId, dateStr] of Object.entries(member.membershipDates)) {
-    const unit = getOrgUnitById(orgId);
-    if (unit && unit.level === 'state') {
-      if (!earliest || dateStr < earliest) earliest = dateStr;
-    }
-  }
-  if (!earliest) {
-    for (const orgId of member.orgUnitIds) {
-      const ancestors = getAncestors(orgId, orgUnits);
-      const stateAncestor = ancestors.find(a => a.level === 'state');
-      if (stateAncestor && member.membershipDates[stateAncestor.id]) {
-        const dateStr = member.membershipDates[stateAncestor.id];
-        if (!earliest || dateStr < earliest) earliest = dateStr;
-      }
-    }
-  }
-  return calcYears(earliest);
 }
 
 /** Get compact qualification tags for display */
@@ -110,8 +75,182 @@ const formatDate = (d) => {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 };
 
+// ─── 3-step Member Add Wizard ───────────────────────────────────────────────
+
+function MemberAddWizard({ allMembers, managedScope, managedOrgUnitIds, onAdd, onClose }) {
+  const { orgUnits } = useAuth();
+  const [step, setStep] = useState(1);
+  const [search, setSearch] = useState('');
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [orgUnitId, setOrgUnitId] = useState(managedScope[0]?.id || '');
+  const [role, setRole] = useState('member');
+
+  const availableMembers = allMembers.filter(m =>
+    !m.orgUnitIds.some(id => managedOrgUnitIds.includes(id)) &&
+    (m.name.toLowerCase().includes(search.toLowerCase()) ||
+     m.email.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handleConfirm = () => {
+    if (!selectedMember || !orgUnitId) return;
+    onAdd(selectedMember, orgUnitId, role);
+    onClose();
+  };
+
+  const getOrgUnitById = (id) => orgUnits.find(u => u.id === id);
+  const selectedOrg = getOrgUnitById(orgUnitId);
+
+  return (
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog dialog--wizard" onClick={e => e.stopPropagation()}>
+
+        <div className="member-wizard-steps">
+          {['Mitglied suchen', 'OrgUnit & Rolle', 'Bestätigen'].map((label, i) => (
+            <div key={i} className={`mwiz-step ${step === i + 1 ? 'active' : ''} ${step > i + 1 ? 'done' : ''}`}>
+              <div className="mwiz-dot">{step > i + 1 ? '✓' : i + 1}</div>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {step === 1 && (
+          <div className="dialog-step-body">
+            <h3>Mitglied suchen</h3>
+            <input
+              className="form-input"
+              type="search"
+              placeholder="Name oder E-Mail..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setSelectedMember(null); }}
+              autoFocus
+            />
+            <div className="mwiz-member-list">
+              {availableMembers.length === 0 && (
+                <p className="mwiz-empty">
+                  {search ? 'Kein Mitglied gefunden.' : 'Alle Mitglieder sind bereits im Scope.'}
+                </p>
+              )}
+              {availableMembers.map(m => (
+                <button
+                  key={m.id}
+                  className={`mwiz-member-item ${selectedMember?.id === m.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedMember(m)}
+                >
+                  <span className="mwiz-member-name">{m.name}</span>
+                  <span className="mwiz-member-email">{m.email}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="dialog-step-body">
+            <h3>OrgUnit & Rolle</h3>
+            <div className="form-group">
+              <label className="form-label">Organisationseinheit *</label>
+              <select
+                className="form-select"
+                value={orgUnitId}
+                onChange={e => setOrgUnitId(e.target.value)}
+              >
+                <option value="">-- Bitte wählen --</option>
+                {managedScope.map(unit => (
+                  <option key={unit.id} value={unit.id}>
+                    {orgUnitLevels[unit.level]?.name}: {unit.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Rolle</label>
+              <select
+                className="form-select"
+                value={role}
+                onChange={e => setRole(e.target.value)}
+              >
+                <option value="member">Mitglied</option>
+                <option value="organizer">Organisator</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="dialog-step-body">
+            <h3>Bestätigen</h3>
+            <div className="mwiz-confirm-card">
+              <div className="mwiz-confirm-field">
+                <label>Mitglied</label>
+                <span className="mwiz-confirm-name">{selectedMember?.name}</span>
+                <span className="mwiz-confirm-email">{selectedMember?.email}</span>
+              </div>
+              <div className="mwiz-confirm-field">
+                <label>Organisationseinheit</label>
+                <span>{selectedOrg ? `${orgUnitLevels[selectedOrg.level]?.name}: ${selectedOrg.name}` : '—'}</span>
+              </div>
+              <div className="mwiz-confirm-field">
+                <label>Rolle</label>
+                <span>{role === 'organizer' ? 'Organisator' : 'Mitglied'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="dialog-actions dialog-actions--wizard">
+          <div>
+            {step > 1 && (
+              <button className="btn btn-secondary" onClick={() => setStep(s => s - 1)}>
+                ← Zurück
+              </button>
+            )}
+          </div>
+          <div className="dialog-actions-right">
+            <button className="btn btn-secondary" onClick={onClose}>Abbrechen</button>
+            {step < 3 ? (
+              <button
+                className="btn btn-primary"
+                onClick={() => setStep(s => s + 1)}
+                disabled={step === 1 && !selectedMember}
+              >
+                Weiter →
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary"
+                onClick={handleConfirm}
+                disabled={!orgUnitId}
+              >
+                Hinzufügen
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MemberManagement ─────────────────────────────────────────────────────────
+
 function MemberManagement() {
-  const { getManagedScope } = useAuth();
+  const { getManagedScope, orgUnits } = useAuth();
+  const getOrgUnitById = (id) => orgUnits.find(u => u.id === id);
+  const {
+    loadProfile,
+    saveProfile,
+    saveFunktionen,
+    saveEhrungen,
+    loadDogs,
+    saveDog,
+    deleteDog,
+    savePruefung,
+    deletePruefung,
+    saving,
+    loading: supabaseLoading,
+    error: supabaseError,
+    clearError,
+  } = useSupabaseProfile();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [orgUnitFilter, setOrgUnitFilter] = useState('all');
@@ -120,20 +259,158 @@ function MemberManagement() {
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [exportMessage, setExportMessage] = useState(null);
+  const [drawerSaveMessage, setDrawerSaveMessage] = useState(null);
 
   // Detail drawer state
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   // Local edits to member admin fields (keyed by member id)
   const [memberEdits, setMemberEdits] = useState({});
+  // Dogs state keyed by memberId
+  const [memberDogs, setMemberDogs] = useState({});
+  const [dogDeleteConfirm, setDogDeleteConfirm] = useState(null);
+
+  // Members loaded from Supabase
+  const [dbMembers, setDbMembers] = useState([]);
+
+  // All users (for MemberAddWizard search)
+  const [allMembers, setAllMembers] = useState([]);
+  const [showMemberWizard, setShowMemberWizard] = useState(false);
+  const [removeMemberConfirm, setRemoveMemberConfirm] = useState(null);
 
   const managedScope = getManagedScope();
   const managedOrgUnitIds = useMemo(() => managedScope.map(u => u.id), [managedScope]);
 
+  // Load members from Supabase
+  useEffect(() => {
+    if (!supabase || managedOrgUnitIds.length === 0) return;
+
+    async function loadMembers() {
+      // 1. Get user IDs in managed scope
+      const { data: memberships, error: membError } = await supabase
+        .from('UserOrgUnit')
+        .select('userId, orgUnitId')
+        .in('orgUnitId', managedOrgUnitIds);
+
+      if (membError) {
+        console.warn('[MemberManagement] memberships error:', membError.message);
+        return;
+      }
+
+      const userIds = [...new Set((memberships || []).map(m => m.userId))];
+      if (userIds.length === 0) return;
+
+      // 2. Load users + profiles in parallel
+      const [usersRes, profilesRes] = await Promise.all([
+        supabase.from('User').select('id, firstName, lastName, email, isActive').in('id', userIds),
+        supabase.from('UserProfile').select('*').in('userId', userIds),
+      ]);
+
+      const profileMap = {};
+      for (const p of (profilesRes.data || [])) {
+        profileMap[p.userId] = p;
+      }
+
+      const orgIdsByUser = {};
+      for (const m of (memberships || [])) {
+        if (!orgIdsByUser[m.userId]) orgIdsByUser[m.userId] = [];
+        orgIdsByUser[m.userId].push(m.orgUnitId);
+      }
+
+      const mapped = (usersRes.data || []).map(u => {
+        const p = profileMap[u.id] || {};
+        const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email?.split('@')[0] || '';
+        return {
+          id: u.id,
+          firstName: u.firstName || '',
+          lastName: u.lastName || '',
+          name: fullName,
+          email: u.email,
+          orgUnitIds: orgIdsByUser[u.id] || [],
+          membershipDates: {},
+          firstHuntingLicenseDate: p.huntingLicenseDate || null,
+          profile: {
+            anrede: p.anrede || '',
+            titel: p.titel || '',
+            briefanrede: p.briefanrede || '',
+            berufsgruppe: p.berufsgruppe || '',
+            geburtsort: p.geburtsort || '',
+            nationalitaet: p.nationalitaet || '',
+            telefonPrivat: p.telefonPrivat || '',
+            telefonDienstlich: p.telefonDienstlich || '',
+            handy: p.telefonHandy || '',
+            street: p.strasse || '',
+            postalCode: p.plz || '',
+            city: p.ort || '',
+            land: p.land || '',
+            bezirk: p.bezirk || '',
+            hasPostalAddress: false,
+            postStrasse: p.postfachStrasse || '',
+            postPlz: p.postfachPlz || '',
+            postOrt: p.postfachOrt || '',
+            postLand: '',
+            dateOfBirth: p.geburtsdatum || '',
+            gender: p.geschlecht || '',
+            huntingLicenseDate: p.huntingLicenseDate || null,
+            mitgliedJagdverbandSeit: p.mitgliedJagdverbandSeit || null,
+          },
+          qualifications: {
+            aktivMitglied: u.isActive,
+            jagdpaechter: p.qualifications?.jagdpaechter || false,
+            begegnungsscheininhaber: p.qualifications?.begegnungsscheininhaber || false,
+            hundefuehrer: p.qualifications?.hundefuehrer || false,
+            bestaetigterJagdaufseher: p.qualifications?.bestaetigterJagdaufseher || false,
+            fallenlehrgang: p.qualifications?.fallenlehrgang || false,
+            jagdhorn: p.qualifications?.jagdhorn || false,
+            drohnenfuehrerschein: p.qualifications?.drohnenfuehrerschein || false,
+            hundpruefungsarten: p.qualifications?.hundpruefungsarten || [],
+            schiessleistungsnadel: p.qualifications?.schiessleistungsnadel || '',
+          },
+          funktionen: [],
+          ehrungen: [],
+          externeMitgliedsnummer: p.externeMitgliedsnummer || '',
+          bemerkungen: p.bemerkungen || '',
+          istExternesMitglied: p.istExternesMitglied || false,
+        };
+      });
+
+      setDbMembers(mapped);
+    }
+
+    loadMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managedOrgUnitIds.join(',')]);
+
+  // Load all users (not just scope) for MemberAddWizard
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from('UserOrgUnit')
+      .select('userId, orgUnitId, role, User(id, firstName, lastName, email)')
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('[MemberManagement] allMembers load error:', error.message);
+          return;
+        }
+        const byUser = {};
+        for (const row of (data || [])) {
+          if (!row.User) continue;
+          const userId = row.userId;
+          const u = row.User;
+          const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email?.split('@')[0] || '';
+          if (!byUser[userId]) {
+            byUser[userId] = { id: u.id, name: fullName, email: u.email, orgUnitIds: [] };
+          }
+          byUser[userId].orgUnitIds.push(row.orgUnitId);
+        }
+        setAllMembers(Object.values(byUser));
+      });
+  }, []);
+
   const membersInScope = useMemo(() =>
-    mockMembers.filter(member =>
+    dbMembers.filter(member =>
       member.orgUnitIds.some(orgId => managedOrgUnitIds.includes(orgId))
     ),
-    [managedOrgUnitIds]
+    [dbMembers, managedOrgUnitIds]
   );
 
   const filteredMembers = useMemo(() => {
@@ -166,18 +443,6 @@ function MemberManagement() {
         case 'name':
           valA = a.name.toLowerCase();
           valB = b.name.toLowerCase();
-          break;
-        case 'jagdschein':
-          valA = calcYears(a.firstHuntingLicenseDate) ?? -1;
-          valB = calcYears(b.firstHuntingLicenseDate) ?? -1;
-          break;
-        case 'hegering':
-          valA = getHegeringYears(a) ?? -1;
-          valB = getHegeringYears(b) ?? -1;
-          break;
-        case 'ljv':
-          valA = getStateYears(a) ?? -1;
-          valB = getStateYears(b) ?? -1;
           break;
         case 'aktiv':
           valA = a.qualifications.aktivMitglied ? 1 : 0;
@@ -271,6 +536,12 @@ function MemberManagement() {
     updateMemberEdit(memberId, 'funktionen', updated);
   };
 
+  // Qualifications update
+  const handleUpdateQualification = (memberId, key, value) => {
+    const current = getEffectiveMember(membersInScope.find(m => m.id === memberId));
+    updateMemberEdit(memberId, 'qualifications', { ...current.qualifications, [key]: value });
+  };
+
   // Ehrungen CRUD
   const handleAddEhrung = (memberId) => {
     const current = getEffectiveMember(membersInScope.find(m => m.id === memberId));
@@ -290,14 +561,228 @@ function MemberManagement() {
     updateMemberEdit(memberId, 'ehrungen', updated);
   };
 
+  // Load member profile from Supabase when drawer opens
+  useEffect(() => {
+    if (!selectedMemberId) return;
+    let cancelled = false;
+    clearError();
+    setDrawerSaveMessage(null);
+
+    async function fetchMember() {
+      const [result, dogs] = await Promise.all([
+        loadProfile(selectedMemberId),
+        loadDogs(selectedMemberId),
+      ]);
+      if (cancelled) return;
+      if (result) {
+        const edits = {};
+        if (result.profile) {
+          const profileMerge = {};
+          for (const [key, val] of Object.entries(result.profile)) {
+            if (val !== null && val !== undefined) {
+              profileMerge[key] = val;
+            }
+          }
+          if (Object.keys(profileMerge).length > 0) {
+            edits.profile = {
+              ...(membersInScope.find(m => m.id === selectedMemberId)?.profile || {}),
+              ...profileMerge,
+            };
+          }
+        }
+        if (result.funktionen && result.funktionen.length > 0) {
+          edits.funktionen = result.funktionen;
+        }
+        if (result.ehrungen && result.ehrungen.length > 0) {
+          edits.ehrungen = result.ehrungen;
+        }
+        if (Object.keys(edits).length > 0) {
+          setMemberEdits(prev => ({
+            ...prev,
+            [selectedMemberId]: { ...prev[selectedMemberId], ...edits },
+          }));
+        }
+      }
+      setMemberDogs(prev => ({ ...prev, [selectedMemberId]: dogs || [] }));
+    }
+
+    fetchMember();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMemberId]);
+
+  // Add member to a managed org unit
+  const handleAddMemberConfirm = async (member, orgUnitId, role) => {
+    if (supabase) {
+      const { error } = await supabase
+        .from('UserOrgUnit')
+        .upsert(
+          { userId: member.id, orgUnitId: orgUnitId, role },
+          { onConflict: 'userId,orgUnitId' }
+        );
+      if (error) {
+        console.warn('[MemberManagement] add member error:', error.message);
+        return;
+      }
+    }
+    setDbMembers(prev => {
+      const existing = prev.find(m => m.id === member.id);
+      if (existing) {
+        if (!existing.orgUnitIds.includes(orgUnitId)) {
+          return prev.map(m => m.id === member.id
+            ? { ...m, orgUnitIds: [...m.orgUnitIds, orgUnitId] }
+            : m
+          );
+        }
+        return prev;
+      }
+      return [...prev, {
+        id: member.id,
+        firstName: member.firstName || '',
+        lastName: member.lastName || '',
+        name: member.name,
+        email: member.email,
+        orgUnitIds: [orgUnitId],
+        membershipDates: {},
+        firstHuntingLicenseDate: null,
+        profile: {},
+        qualifications: {
+          aktivMitglied: true,
+          jagdpaechter: false,
+          begegnungsscheininhaber: false,
+          hundefuehrer: false,
+          bestaetigterJagdaufseher: false,
+          fallenlehrgang: false,
+          jagdhorn: false,
+          drohnenfuehrerschein: false,
+          hundpruefungsarten: [],
+          schiessleistungsnadel: '',
+        },
+        funktionen: [],
+        ehrungen: [],
+        externeMitgliedsnummer: '',
+        bemerkungen: '',
+        istExternesMitglied: false,
+      }];
+    });
+  };
+
+  // Remove member from a managed org unit
+  const handleRemoveMemberFromOrg = async (memberId, orgUnitId) => {
+    if (supabase) {
+      const { error } = await supabase
+        .from('UserOrgUnit')
+        .delete()
+        .eq('userId', memberId)
+        .eq('orgUnitId', orgUnitId);
+      if (error) {
+        console.warn('[MemberManagement] remove member error:', error.message);
+        setRemoveMemberConfirm(null);
+        return;
+      }
+    }
+    setDbMembers(prev => prev.map(m =>
+      m.id === memberId
+        ? { ...m, orgUnitIds: m.orgUnitIds.filter(id => id !== orgUnitId) }
+        : m
+    ));
+    setRemoveMemberConfirm(null);
+  };
+
+  // Dog handlers
+  const handleAddDog = useCallback(async (memberId, dogData) => {
+    const result = await saveDog(memberId, dogData);
+    if (result.success) {
+      setMemberDogs(prev => ({
+        ...prev,
+        [memberId]: [...(prev[memberId] || []), { ...result.dog, pruefungen: [] }],
+      }));
+    }
+  }, [saveDog]);
+
+  const handleDeleteDog = useCallback(async (memberId, dogId) => {
+    const result = await deleteDog(dogId);
+    if (result.success) {
+      setMemberDogs(prev => ({
+        ...prev,
+        [memberId]: (prev[memberId] || []).filter(d => d.id !== dogId),
+      }));
+    }
+    setDogDeleteConfirm(null);
+  }, [deleteDog]);
+
+  const handleAddPruefung = useCallback(async (memberId, dogId, pruefungData) => {
+    const result = await savePruefung(dogId, pruefungData);
+    if (result.success) {
+      setMemberDogs(prev => ({
+        ...prev,
+        [memberId]: (prev[memberId] || []).map(d =>
+          d.id === dogId
+            ? { ...d, pruefungen: [...(d.pruefungen || []), result.pruefung] }
+            : d
+        ),
+      }));
+    }
+  }, [savePruefung]);
+
+  const handleDeletePruefung = useCallback(async (memberId, dogId, pruefungId) => {
+    const result = await deletePruefung(pruefungId);
+    if (result.success) {
+      setMemberDogs(prev => ({
+        ...prev,
+        [memberId]: (prev[memberId] || []).map(d =>
+          d.id === dogId
+            ? { ...d, pruefungen: (d.pruefungen || []).filter(p => p.id !== pruefungId) }
+            : d
+        ),
+      }));
+    }
+  }, [deletePruefung]);
+
+  // Save all drawer changes for a member to Supabase
+  const handleSaveMember = useCallback(async (memberId) => {
+    const member = getEffectiveMember(membersInScope.find(m => m.id === memberId));
+    if (!member) return;
+
+    setDrawerSaveMessage(null);
+    clearError();
+
+    const profileData = member.profile || {};
+    const results = await Promise.all([
+      saveProfile(memberId, {
+        ...profileData,
+        qualifications: member.qualifications || {},
+        bemerkungen: member.bemerkungen,
+        externeMitgliedsnummer: member.externeMitgliedsnummer,
+      }),
+      saveFunktionen(memberId, member.funktionen || []),
+      saveEhrungen(memberId, member.ehrungen || []),
+    ]);
+
+    const allSuccess = results.every(r => r.success);
+    if (allSuccess) {
+      setDrawerSaveMessage('Mitgliederdaten gespeichert');
+    } else {
+      const failedOps = results.filter(r => !r.success).map(r => r.error).join('; ');
+      setDrawerSaveMessage(`Lokal aktualisiert (DB-Fehler: ${failedOps})`);
+    }
+    setTimeout(() => setDrawerSaveMessage(null), 4000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membersInScope, memberEdits]);
+
   return (
     <div className={`member-mgmt ${selectedMember ? 'has-drawer' : ''}`}>
       <div className="member-mgmt-main">
         <div className="member-mgmt-header">
           <h2>Mitgliederverwaltung</h2>
-          <div className="member-mgmt-scope-summary">
-            <span className="scope-chip">{managedScope.length} Einheiten</span>
-            <span className="scope-chip">{membersInScope.length} Mitglieder</span>
+          <div className="member-mgmt-header-right">
+            <div className="member-mgmt-scope-summary">
+              <span className="scope-chip">{managedScope.length} Einheiten</span>
+              <span className="scope-chip">{membersInScope.length} Mitglieder</span>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowMemberWizard(true)}>
+              + Mitglied hinzufügen
+            </button>
           </div>
         </div>
 
@@ -352,22 +837,16 @@ function MemberManagement() {
                 <th>Telefon</th>
                 <th>E-Mail</th>
                 <th className="sortable" onClick={() => handleSort('aktiv')}>Aktiv{sortIndicator('aktiv')}</th>
-                <th className="sortable num" onClick={() => handleSort('jagdschein')}>J. Jagdschein{sortIndicator('jagdschein')}</th>
-                <th className="sortable num" onClick={() => handleSort('hegering')}>J. Hegering{sortIndicator('hegering')}</th>
-                <th className="sortable num" onClick={() => handleSort('ljv')}>J. LJV{sortIndicator('ljv')}</th>
                 <th>Qualifikationen</th>
               </tr>
             </thead>
             <tbody>
               {sortedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="member-mgmt-empty">Keine Mitglieder gefunden.</td>
+                  <td colSpan="6" className="member-mgmt-empty">Keine Mitglieder gefunden.</td>
                 </tr>
               ) : (
                 sortedMembers.map(member => {
-                  const jagdscheinYears = calcYears(member.firstHuntingLicenseDate);
-                  const hegeringYears = getHegeringYears(member);
-                  const stateYears = getStateYears(member);
                   const tags = getQualificationTags(member.qualifications);
                   const isSelected = selectedMemberId === member.id;
 
@@ -389,7 +868,19 @@ function MemberManagement() {
                             const unit = getOrgUnitById(orgId);
                             if (!unit) return null;
                             return (
-                              <span key={orgId} className={`org-badge level-${unit.level}`}>{unit.name}</span>
+                              <span key={orgId} className="org-badge-removable">
+                                {unit.name}
+                                <button
+                                  className="org-badge-remove-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRemoveMemberConfirm({ member, orgUnitId: orgId, orgName: unit.name });
+                                  }}
+                                  title="Aus dieser Einheit entfernen"
+                                >
+                                  ×
+                                </button>
+                              </span>
                             );
                           })}
                       </td>
@@ -400,9 +891,6 @@ function MemberManagement() {
                           {member.qualifications.aktivMitglied ? 'Aktiv' : 'Inaktiv'}
                         </span>
                       </td>
-                      <td className="col-num">{jagdscheinYears != null ? jagdscheinYears : '-'}</td>
-                      <td className="col-num">{hegeringYears != null ? hegeringYears : '-'}</td>
-                      <td className="col-num">{stateYears != null ? stateYears : '-'}</td>
                       <td className="col-tags">
                         {tags.length > 0 ? (
                           tags.map((tag, i) => <span key={i} className="qual-tag">{tag}</span>)
@@ -419,11 +907,72 @@ function MemberManagement() {
         </div>
       </div>
 
+      {/* Member Add Wizard */}
+      {showMemberWizard && (
+        <MemberAddWizard
+          allMembers={allMembers}
+          managedScope={managedScope}
+          managedOrgUnitIds={managedOrgUnitIds}
+          onAdd={handleAddMemberConfirm}
+          onClose={() => setShowMemberWizard(false)}
+        />
+      )}
+
+      {/* Remove Member Confirmation */}
+      {removeMemberConfirm && (
+        <div className="dialog-overlay" onClick={() => setRemoveMemberConfirm(null)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3>Mitglied entfernen?</h3>
+            <p>
+              Möchten Sie <strong>{removeMemberConfirm.member.name}</strong> aus{' '}
+              <strong>{removeMemberConfirm.orgName}</strong> entfernen?
+            </p>
+            {removeMemberConfirm.member.orgUnitIds.filter(id => managedOrgUnitIds.includes(id)).length === 1 && (
+              <p className="warning-text">
+                Hinweis: Dies ist die einzige verwaltete Organisationseinheit des Mitglieds.
+              </p>
+            )}
+            <div className="dialog-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setRemoveMemberConfirm(null)}
+              >
+                Abbrechen
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => handleRemoveMemberFromOrg(
+                  removeMemberConfirm.member.id,
+                  removeMemberConfirm.orgUnitId
+                )}
+              >
+                Entfernen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dog Delete Confirmation */}
+      {dogDeleteConfirm && (
+        <div className="dialog-overlay" onClick={() => setDogDeleteConfirm(null)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3>Hund löschen?</h3>
+            <p>Möchten Sie <strong>{dogDeleteConfirm.dogName}</strong> und alle zugehörigen Prüfungen löschen?</p>
+            <div className="dialog-actions">
+              <button className="btn btn-secondary" onClick={() => setDogDeleteConfirm(null)}>Abbrechen</button>
+              <button className="btn btn-danger" onClick={() => handleDeleteDog(dogDeleteConfirm.memberId, dogDeleteConfirm.dogId)}>Löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Detail Drawer */}
       {selectedMember && (
         <MemberDrawer
           member={selectedMember}
           managedOrgUnitIds={managedOrgUnitIds}
+          orgUnits={orgUnits}
           onClose={handleCloseDrawer}
           onUpdateAdmin={(field, value) => updateMemberEdit(selectedMember.id, field, value)}
           onAddFunktion={() => handleAddFunktion(selectedMember.id)}
@@ -432,15 +981,29 @@ function MemberManagement() {
           onAddEhrung={() => handleAddEhrung(selectedMember.id)}
           onUpdateEhrung={(index, field, value) => handleUpdateEhrung(selectedMember.id, index, field, value)}
           onRemoveEhrung={(index) => handleRemoveEhrung(selectedMember.id, index)}
+          onUpdateQualification={(key, value) => handleUpdateQualification(selectedMember.id, key, value)}
+          onSave={() => handleSaveMember(selectedMember.id)}
+          saving={saving}
+          loading={supabaseLoading}
+          saveMessage={drawerSaveMessage}
+          saveError={supabaseError}
+          dogs={memberDogs[selectedMember.id] || []}
+          onAddDog={(dogData) => handleAddDog(selectedMember.id, dogData)}
+          onDeleteDog={(dogId) => setDogDeleteConfirm({ memberId: selectedMember.id, dogId, dogName: (memberDogs[selectedMember.id] || []).find(d => d.id === dogId)?.name || '' })}
+          onAddPruefung={(dogId, pruefungData) => handleAddPruefung(selectedMember.id, dogId, pruefungData)}
+          onDeletePruefung={(dogId, pruefungId) => handleDeletePruefung(selectedMember.id, dogId, pruefungId)}
         />
       )}
     </div>
   );
 }
 
+const PRUEFUNGSARTEN = ['VJP', 'HZP', 'VGP', 'VSwP', 'Btr', 'Sw/K', 'Spur/F'];
+
 function MemberDrawer({
   member,
   managedOrgUnitIds,
+  orgUnits,
   onClose,
   onUpdateAdmin,
   onAddFunktion,
@@ -449,12 +1012,24 @@ function MemberDrawer({
   onAddEhrung,
   onUpdateEhrung,
   onRemoveEhrung,
+  onUpdateQualification,
+  onSave,
+  saving,
+  loading,
+  saveMessage,
+  saveError,
+  dogs,
+  onAddDog,
+  onDeleteDog,
+  onAddPruefung,
+  onDeletePruefung,
 }) {
   const p = member.profile || {};
   const jagdscheinYears = calcYears(member.firstHuntingLicenseDate);
-  const hegeringYears = getHegeringYears(member);
-  const stateYears = getStateYears(member);
   const qualTags = getQualificationTags(member.qualifications);
+
+  const [newDog, setNewDog] = useState({ name: '', rasse: '', geburtsjahr: '' });
+  const [newPruefungen, setNewPruefungen] = useState({});
 
   const genderLabel = (g) => {
     if (g === 'male') return 'Männlich';
@@ -481,15 +1056,11 @@ function MemberDrawer({
           <div className="drawer-field-grid">
             <div className="drawer-field">
               <label>Jagdschein seit</label>
-              <span>{formatDate(member.firstHuntingLicenseDate)}{jagdscheinYears != null ? ` (${jagdscheinYears} J.)` : ''}</span>
+              <span>{formatDate(member.profile?.huntingLicenseDate || member.firstHuntingLicenseDate)}{jagdscheinYears != null ? ` (${jagdscheinYears} J.)` : ''}</span>
             </div>
             <div className="drawer-field">
-              <label>Jahre im Hegering</label>
-              <span>{hegeringYears != null ? `${hegeringYears} J.` : '—'}</span>
-            </div>
-            <div className="drawer-field">
-              <label>Jahre im LJV</label>
-              <span>{stateYears != null ? `${stateYears} J.` : '—'}</span>
+              <label>Jahre im Jagdverband</label>
+              <span>{member.profile?.mitgliedJagdverbandSeit ? `seit ${member.profile.mitgliedJagdverbandSeit}` : '—'}</span>
             </div>
             <div className="drawer-field">
               <label>Status</label>
@@ -532,6 +1103,35 @@ function MemberDrawer({
             </div>
             <div className="drawer-field">
               <label>Geschlecht</label><span>{genderLabel(p.gender)}</span>
+            </div>
+            <div className="drawer-field">
+              <label>J. Jagdscheinausstellung</label>
+              <input
+                type="number"
+                className="drawer-inline-input"
+                value={p.huntingLicenseDate ? String(new Date(p.huntingLicenseDate).getFullYear()) : ''}
+                onChange={(e) => {
+                  const year = e.target.value;
+                  const dateVal = year ? `${year}-01-01` : null;
+                  onUpdateAdmin('profile', { ...p, huntingLicenseDate: dateVal });
+                }}
+                min="1900" max="2099"
+                placeholder="z.B. 2010"
+              />
+            </div>
+            <div className="drawer-field">
+              <label>J. Mitglied Jagdverband</label>
+              <input
+                type="number"
+                className="drawer-inline-input"
+                value={p.mitgliedJagdverbandSeit || ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value, 10) : null;
+                  onUpdateAdmin('profile', { ...p, mitgliedJagdverbandSeit: val });
+                }}
+                min="1900" max="2099"
+                placeholder="z.B. 2012"
+              />
             </div>
           </div>
         </div>
@@ -579,6 +1179,39 @@ function MemberDrawer({
                 <span>{p.postStrasse}, {p.postPlz} {p.postOrt}, {p.postLand}</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Qualifikationen Editor */}
+        <div className="drawer-section">
+          <h4 className="drawer-section-title">Qualifikationen bearbeiten</h4>
+          <div className="drawer-qual-edit">
+            <div className="drawer-qual-group">
+              {['jagdpaechter','begegnungsscheininhaber','hundefuehrer',
+                'bestaetigterJagdaufseher','fallenlehrgang','jagdhorn','drohnenfuehrerschein'].map(key => (
+                <label key={key} className="drawer-qual-check">
+                  <input
+                    type="checkbox"
+                    checked={!!member.qualifications?.[key]}
+                    onChange={(e) => onUpdateQualification(key, e.target.checked)}
+                  />
+                  {qualificationLabels[key]}
+                </label>
+              ))}
+            </div>
+            <div className="drawer-qual-subgroup">
+              <span className="drawer-qual-sublabel">Schießleistungsnadel:</span>
+              <select
+                className="drawer-inline-select"
+                value={member.qualifications?.schiessleistungsnadel || ''}
+                onChange={(e) => onUpdateQualification('schiessleistungsnadel', e.target.value)}
+              >
+                <option value="">— Keine —</option>
+                <option value="bronze">Bronze</option>
+                <option value="silber">Silber</option>
+                <option value="gold">Gold</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -680,6 +1313,112 @@ function MemberDrawer({
           )}
         </div>
 
+        {/* Hunde */}
+        <div className="drawer-section">
+          <h4 className="drawer-section-title">Hunde</h4>
+
+          {dogs.length === 0 && <p className="drawer-empty">Keine Hunde eingetragen.</p>}
+
+          {dogs.map(dog => (
+            <div key={dog.id} className="dog-card">
+              <div className="dog-card-header">
+                <div className="dog-card-title">
+                  <strong>{dog.name}</strong>
+                  {dog.rasse && <span className="dog-rasse"> · {dog.rasse}</span>}
+                  {dog.geburtsjahr && <span className="dog-year"> · Jg. {dog.geburtsjahr}</span>}
+                </div>
+                <button className="btn-remove-entry" onClick={() => onDeleteDog(dog.id)} title="Hund löschen">✕</button>
+              </div>
+
+              <div className="dog-pruefungen">
+                {(dog.pruefungen || []).length === 0
+                  ? <span className="no-tags">Keine Prüfungen</span>
+                  : (dog.pruefungen || []).map(p => (
+                    <span key={p.id} className="pruefung-tag">
+                      {p.pruefungsart}{p.datum ? ` (${new Date(p.datum).getFullYear()})` : ''}
+                      <button
+                        className="pruefung-remove"
+                        onClick={() => onDeletePruefung(dog.id, p.id)}
+                        title="Prüfung entfernen"
+                      >×</button>
+                    </span>
+                  ))
+                }
+              </div>
+
+              <div className="dog-add-pruefung">
+                <select
+                  className="form-select form-select--sm"
+                  value={newPruefungen[dog.id]?.pruefungsart || ''}
+                  onChange={e => setNewPruefungen(prev => ({ ...prev, [dog.id]: { ...prev[dog.id], pruefungsart: e.target.value } }))}
+                >
+                  <option value="">Prüfung wählen...</option>
+                  {PRUEFUNGSARTEN.map(art => <option key={art} value={art}>{art}</option>)}
+                </select>
+                <input
+                  type="number"
+                  className="drawer-inline-input"
+                  placeholder="Jahr"
+                  min="1900" max="2099"
+                  value={newPruefungen[dog.id]?.datumYear || ''}
+                  onChange={e => setNewPruefungen(prev => ({ ...prev, [dog.id]: { ...prev[dog.id], datumYear: e.target.value } }))}
+                />
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={!newPruefungen[dog.id]?.pruefungsart}
+                  onClick={() => {
+                    const entry = newPruefungen[dog.id] || {};
+                    const datum = entry.datumYear ? `${entry.datumYear}-01-01` : null;
+                    onAddPruefung(dog.id, { pruefungsart: entry.pruefungsart, datum });
+                    setNewPruefungen(prev => ({ ...prev, [dog.id]: { pruefungsart: '', datumYear: '' } }));
+                  }}
+                >
+                  + Prüfung
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <div className="dog-add-form">
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Name *"
+              value={newDog.name}
+              onChange={e => setNewDog(prev => ({ ...prev, name: e.target.value }))}
+            />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Rasse"
+              value={newDog.rasse}
+              onChange={e => setNewDog(prev => ({ ...prev, rasse: e.target.value }))}
+            />
+            <input
+              type="number"
+              className="drawer-inline-input"
+              placeholder="Jg."
+              min="2000" max="2099"
+              value={newDog.geburtsjahr}
+              onChange={e => setNewDog(prev => ({ ...prev, geburtsjahr: e.target.value }))}
+            />
+            <button
+              className="btn btn-secondary btn-sm"
+              disabled={!newDog.name.trim()}
+              onClick={() => {
+                onAddDog({
+                  name: newDog.name.trim(),
+                  rasse: newDog.rasse.trim() || null,
+                  geburtsjahr: newDog.geburtsjahr ? parseInt(newDog.geburtsjahr, 10) : null,
+                });
+                setNewDog({ name: '', rasse: '', geburtsjahr: '' });
+              }}
+            >
+              + Hund hinzufügen
+            </button>
+          </div>
+        </div>
+
         {/* Admin Fields */}
         <div className="drawer-section drawer-section--admin">
           <h4 className="drawer-section-title">Verwaltungsfelder <span className="admin-badge">Admin</span></h4>
@@ -709,6 +1448,19 @@ function MemberDrawer({
               rows={3}
             />
           </div>
+        </div>
+
+        {/* Save button + status */}
+        <div className="drawer-section drawer-save-section">
+          {saveMessage && <div className="drawer-save-message">{saveMessage}</div>}
+          {saveError && <div className="drawer-save-error">{saveError}</div>}
+          <button
+            className="btn-save-drawer"
+            onClick={onSave}
+            disabled={saving || loading}
+          >
+            {saving ? 'Speichern...' : 'Alle Änderungen speichern'}
+          </button>
         </div>
 
       </div>

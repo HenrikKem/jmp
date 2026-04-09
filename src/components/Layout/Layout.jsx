@@ -1,122 +1,155 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
 
-/**
- * Layout Component
- *
- * Provides the main application layout with role-based navigation.
- *
- * Navigation visibility:
- * - Dashboard, Organisation, Profil: All members
- * - Organizer-Bereich: Organizers and Admins only
- * - Admin-Bereich: Admins only
- */
-function Layout() {
-  const { user, isAdmin, isOrganizer, hasOrganizerAccess, hasAdminAccess, switchDemoRole } = useAuth();
+const PAGE_TITLES = {
+  '/': 'Dashboard',
+  '/organisation': 'Organisation',
+  '/events': 'Events',
+  '/profil': 'Mein Profil',
+  '/organizer': 'Event-Verwaltung',
+  '/manage': 'Mitgliederverwaltung',
+  '/admin/zugangsverwaltung': 'Zugangsverwaltung',
+  '/admin/organisationsstruktur': 'Organisationsstruktur',
+};
 
-  const getCurrentRole = () => {
-    if (user.isAdmin) return 'admin';
-    if (user.memberships?.some(m => m.role === 'organizer')) return 'organizer';
-    return 'member';
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function Layout() {
+  const { user, isAdmin, isOrganizer, hasOrganizerAccess, hasAdminAccess, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const getPageTitle = () => {
+    if (location.pathname.startsWith('/events/')) return 'Event-Details';
+    return PAGE_TITLES[location.pathname] || 'JMP';
+  };
+
+  const displayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email?.split('@')[0] || '?'
+    : '?';
+  const roleLabel = isAdmin ? 'Administrator' : isOrganizer ? 'Organisator' : 'Mitglied';
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false);
+    await logout();
+    navigate('/login');
   };
 
   return (
     <div className="layout">
-      <header className="header">
-        <div className="header-content">
-          <h1 className="logo">JMP</h1>
-          <span className="logo-subtitle">Jagd-Management-Portal</span>
+      {/* Sidebar */}
+      <nav className="sidebar">
+        <div className="sidebar-logo">
+          <span className="logo-text">JMP</span>
         </div>
-        <div className="user-info">
-          <span className="user-email">{user.email}</span>
-          {isAdmin && <span className="role-tag admin">Admin</span>}
-          {isOrganizer && !isAdmin && <span className="role-tag organizer">Organisator</span>}
-          {!isOrganizer && !isAdmin && <span className="role-tag member">Mitglied</span>}
-        </div>
-      </header>
 
-      <div className="main-container">
-        <nav className="sidebar">
-          <ul className="nav-list">
-            <li>
-              <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} end>
-                Dashboard
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/organisation" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Organisation
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/events" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Events
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/profil" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Profil
-              </NavLink>
-            </li>
+        <ul className="nav-list">
+          <li>
+            <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} end>
+              Dashboard
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/organisation" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Organisation
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/events" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Events
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/profil" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Profil
+            </NavLink>
+          </li>
 
-            {/* Organizer/Admin section - only visible if user has access */}
-            {hasOrganizerAccess && (
-              <>
-                <li className="nav-divider">
-                  <span>Verwaltung</span>
-                </li>
-                <li>
-                  <NavLink to="/manage" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Mitgliederverwaltung
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/organizer" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Organizer-Bereich
-                  </NavLink>
-                </li>
-              </>
-            )}
-
-            {/* Admin section - only visible if user is admin */}
-            {hasAdminAccess && (
+          {hasOrganizerAccess && (
+            <>
+              <li className="nav-divider">
+                <span>Verwaltung</span>
+              </li>
               <li>
-                <NavLink to="/admin" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                  Admin-Bereich
+                <NavLink to="/manage" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                  Mitgliederverwaltung
                 </NavLink>
               </li>
-            )}
-          </ul>
+              <li>
+                <NavLink to="/organizer" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                  Event-Verwaltung
+                </NavLink>
+              </li>
+            </>
+          )}
 
-          {/* Demo Role Switcher */}
-          <div className="demo-role-switcher">
-            <h4>Demo: Rolle wechseln</h4>
-            <div className="role-buttons">
-              <button
-                className={`role-switch-btn ${getCurrentRole() === 'member' ? 'active' : ''}`}
-                onClick={() => switchDemoRole('member')}
-              >
-                Mitglied
-              </button>
-              <button
-                className={`role-switch-btn ${getCurrentRole() === 'organizer' ? 'active' : ''}`}
-                onClick={() => switchDemoRole('organizer')}
-              >
-                Organisator
-              </button>
-              <button
-                className={`role-switch-btn ${getCurrentRole() === 'admin' ? 'active' : ''}`}
-                onClick={() => switchDemoRole('admin')}
-              >
-                Admin
-              </button>
-            </div>
-            <p className="demo-hint">
-              Aktiv: <strong>{user.email}</strong>
-            </p>
+          {hasAdminAccess && (
+            <>
+              <li className="nav-divider">
+                <span>Admin</span>
+              </li>
+              <li>
+                <NavLink to="/admin/zugangsverwaltung" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                  Zugangsverwaltung
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/admin/organisationsstruktur" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                  Organisationsstruktur
+                </NavLink>
+              </li>
+            </>
+          )}
+        </ul>
+
+        {/* User block */}
+        <div className="sidebar-user">
+          <div className="user-avatar">{getInitials(displayName)}</div>
+          <div className="user-info">
+            <span className="user-name">{displayName}</span>
+            <span className="user-role">{roleLabel}</span>
           </div>
-        </nav>
+        </div>
+      </nav>
+
+      {/* Right side: topbar + content */}
+      <div className="main-wrapper">
+        <header className="topbar">
+          <span className="topbar-title">{getPageTitle()}</span>
+          <div className="topbar-right">
+            <button className="topbar-icon-btn" title="Benachrichtigungen">
+              🔔
+            </button>
+            <div className="topbar-avatar-wrapper">
+              <button
+                className="topbar-avatar"
+                onClick={() => setUserMenuOpen(o => !o)}
+                title={displayName}
+              >
+                {getInitials(displayName)}
+              </button>
+              {userMenuOpen && (
+                <div className="user-dropdown" onClick={() => setUserMenuOpen(false)}>
+                  <NavLink to="/profil" className="user-dropdown-item">Profil</NavLink>
+                  <button
+                    className="user-dropdown-item user-dropdown-item--danger"
+                    onClick={handleLogout}
+                  >
+                    Abmelden
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
 
         <main className="content">
           <Outlet />

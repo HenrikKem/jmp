@@ -1,41 +1,44 @@
 /* Group Manager Dialog */
 .group-manager-dialog {
-  background: white;
-  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius-xl);
   width: 90%;
   max-width: 550px;
   max-height: 80vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
 }
 
 .dialog-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid #eee;
+  padding: 18px 24px;
 }
 
 .dialog-header h3 {
+  font-family: 'Manrope', system-ui, sans-serif;
   margin: 0 0 4px 0;
-  color: #2c3e50;
-  font-size: 18px;
+  color: var(--on-surface);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .dialog-header .event-name {
-  font-size: 14px;
-  color: #7f8c8d;
+  font-size: 13px;
+  color: var(--secondary);
 }
 
 .error-message {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 12px 24px;
-  border-bottom: 1px solid #f5c6cb;
+  background: var(--error-container);
+  color: var(--error);
+  padding: 10px 24px;
+  font-size: 13px;
 }
 
 .groups-content {
-  padding: 24px;
+  padding: 20px;
   overflow-y: auto;
   flex: 1;
 }
@@ -46,29 +49,34 @@
 }
 
 .no-groups p {
-  margin: 0 0 8px 0;
-  color: #2c3e50;
+  margin: 0 0 6px 0;
+  color: var(--on-surface);
+  font-size: 13px;
 }
 
 .no-groups .hint {
-  color: #7f8c8d;
-  font-size: 14px;
+  color: var(--secondary);
+  font-size: 13px;
 }
 
 .groups-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .group-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #eee;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
+}
+
+.group-item:hover {
+  background: var(--surface-container-high);
 }
 
 .group-info {
@@ -78,55 +86,58 @@
 
 .group-item .group-name {
   display: block;
-  font-weight: 600;
-  color: #2c3e50;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--on-surface);
   margin-bottom: 2px;
 }
 
 .group-item .group-time {
-  font-size: 13px;
-  color: #7f8c8d;
+  font-size: 12px;
+  color: var(--secondary);
 }
 
 .group-capacity-info {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 120px;
+  gap: 8px;
+  min-width: 110px;
 }
 
 .capacity-bar-small {
   width: 60px;
-  height: 6px;
-  background: #ecf0f1;
+  height: 5px;
+  background: var(--surface-container-highest);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .capacity-bar-small .capacity-fill {
   height: 100%;
-  background: #3498db;
+  background: var(--primary);
   border-radius: 3px;
   transition: width 0.3s;
 }
 
 .capacity-bar-small .capacity-fill.full {
-  background: #e74c3c;
+  background: var(--error);
 }
 
 .group-capacity-info .capacity-text {
-  font-size: 13px;
-  color: #7f8c8d;
+  font-size: 12px;
+  color: var(--secondary);
   white-space: nowrap;
 }
 
 .group-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .group-actions .action-btn {
-  padding: 6px 12px;
+  height: 28px;
+  padding: 0 10px;
   font-size: 12px;
 }
 
@@ -136,49 +147,55 @@
 }
 
 .dialog-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #eee;
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* Group Form */
 .group-form {
-  padding: 24px;
+  padding: 20px;
 }
 
 .group-form h4 {
-  margin: 0 0 20px 0;
-  color: #2c3e50;
-  font-size: 16px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  margin: 0 0 16px 0;
+  color: var(--on-surface);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .group-form .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .group-form .form-group label {
   display: block;
   margin-bottom: 6px;
-  font-weight: 500;
-  color: #2c3e50;
-  font-size: 14px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 600;
+  color: var(--secondary);
+  font-size: 12px;
 }
 
 .group-form .form-group input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
   font-size: 14px;
+  background: var(--surface-container-lowest);
+  font-family: inherit;
+  color: var(--on-surface);
   box-sizing: border-box;
 }
 
 .group-form .form-group input:focus {
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  border-color: var(--primary-fixed-dim);
+  box-shadow: 0 0 0 2px rgba(161,212,148,0.3);
 }
 
 .group-form .form-group input[type="number"] {
@@ -188,78 +205,84 @@
 .group-form .field-hint {
   display: block;
   font-size: 12px;
-  color: #7f8c8d;
+  color: var(--secondary);
   margin-top: 4px;
 }
 
 .group-form .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #eee;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 14px;
 }
 
 /* Buttons */
 .group-manager-dialog .btn {
-  padding: 10px 20px;
+  height: 36px;
+  padding: 0 16px;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: var(--radius-xl);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  font-family: inherit;
 }
 
 .group-manager-dialog .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .group-manager-dialog .btn-primary {
-  background: #3498db;
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
   color: white;
 }
 
 .group-manager-dialog .btn-primary:hover:not(:disabled) {
-  background: #2980b9;
+  opacity: 0.9;
 }
 
 .group-manager-dialog .btn-secondary {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: var(--surface-container-high);
+  color: var(--tertiary);
 }
 
 .group-manager-dialog .btn-secondary:hover:not(:disabled) {
-  background: #bdc3c7;
+  background: var(--surface-container-highest);
 }
 
 .group-manager-dialog .action-btn {
-  padding: 6px 12px;
+  height: 28px;
+  padding: 0 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  font-family: inherit;
 }
 
 .group-manager-dialog .action-btn.edit {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: var(--surface-container-high);
+  color: var(--on-surface);
 }
 
 .group-manager-dialog .action-btn.edit:hover {
-  background: #3498db;
+  background: var(--primary);
   color: white;
 }
 
 .group-manager-dialog .action-btn.delete {
-  background: #fdf2f2;
-  color: #e74c3c;
+  background: var(--error-container);
+  color: var(--error);
 }
 
 .group-manager-dialog .action-btn.delete:hover:not(:disabled) {
-  background: #e74c3c;
+  background: var(--error);
   color: white;
 }

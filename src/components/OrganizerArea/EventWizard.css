@@ -1,0 +1,302 @@
+/* ===== WIZARD STEPS PROGRESS ===== */
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--surface-container);
+  gap: 0;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+
+.wizard-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--outline-variant);
+  background: var(--surface-container-highest);
+  color: rgba(27,28,26,0.35);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.wizard-step.active .wizard-step-dot {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+
+.wizard-step.done .wizard-step-dot {
+  border-color: var(--primary-fixed-dim);
+  background: rgba(161,212,148,0.2);
+  color: var(--primary);
+}
+
+.wizard-step-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(27,28,26,0.35);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.wizard-step.active .wizard-step-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.wizard-step.done .wizard-step-label {
+  color: var(--secondary);
+}
+
+.wizard-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--surface-container-highest);
+  margin: 0 8px;
+  min-width: 16px;
+}
+
+.wizard-step.done .wizard-step-line {
+  background: rgba(161,212,148,0.4);
+}
+
+/* ===== WIZARD BODY ===== */
+.wizard-body {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.wizard-step-content {
+  /* inherits modal-body padding */
+}
+
+/* ===== FORM HELPERS ===== */
+.form-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--secondary);
+  margin-top: 4px;
+}
+
+/* ===== STEP 2 — GROUPS ===== */
+.wizard-toggle-row {
+  margin-bottom: 20px;
+}
+
+.wizard-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.wizard-toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.wizard-hint-text {
+  font-size: 13px;
+  color: var(--secondary);
+  margin: 0 0 4px 0;
+  line-height: 1.5;
+}
+
+.wizard-empty-hint {
+  font-size: 13px;
+  color: rgba(27,28,26,0.35);
+  margin: 0 0 16px 0;
+  font-style: italic;
+}
+
+.wizard-skip-hint {
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.wizard-skip-hint p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
+
+.wizard-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.wizard-group-row,
+.wizard-role-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.wizard-group-fields,
+.wizard-role-fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.wizard-role-fields {
+  grid-template-columns: 1fr 1fr;
+}
+
+.wizard-remove-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-container-high);
+  color: var(--secondary);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.wizard-remove-btn:hover {
+  background: var(--error-container);
+  color: var(--error);
+}
+
+/* ===== STEP 4 — PREVIEW ===== */
+.wizard-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-section {
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.preview-section-title {
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 12px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.preview-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.preview-field--full {
+  grid-column: 1 / -1;
+}
+
+.preview-field label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(27,28,26,0.35);
+  text-transform: uppercase;
+}
+
+.preview-field span {
+  font-size: 13px;
+  color: var(--on-surface);
+}
+
+.preview-empty {
+  font-size: 13px;
+  color: rgba(27,28,26,0.35);
+  font-style: italic;
+}
+
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-tag {
+  background: var(--surface-container-high);
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.preview-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-role-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-role-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  background: var(--surface-container-high);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.preview-role-member {
+  font-size: 13px;
+  color: var(--on-surface);
+}
+
+/* ===== FOOTER LAYOUT ===== */
+.wizard-footer {
+  justify-content: space-between !important;
+}
+
+.wizard-footer-left {
+  display: flex;
+}
+
+.wizard-footer-right {
+  display: flex;
+  gap: 8px;
+}

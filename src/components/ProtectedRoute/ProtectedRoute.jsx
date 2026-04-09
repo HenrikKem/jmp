@@ -16,7 +16,7 @@ function ProtectedRoute({ children, requireOrganizer, requireAdmin }) {
 
   // Not logged in
   if (!isMember) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Requires admin but user is not admin

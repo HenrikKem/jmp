@@ -3,149 +3,153 @@
   margin: 0 auto;
 }
 
-.dashboard h2 {
-  margin-bottom: 24px;
-  color: #2c3e50;
-}
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 4rem;
 }
 
+/* Stat Cards */
 .dashboard-card {
-  background: white;
-  border-radius: 8px;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border: 1px solid #ddd;
+  box-shadow: var(--shadow-sm);
 }
 
 .dashboard-card.highlight {
-  border-color: #3498db;
-  background: linear-gradient(135deg, #fff 0%, #e8f4fc 100%);
+  background: var(--surface-container-low);
+  border-top: 4px solid transparent;
+  border-image: linear-gradient(90deg, var(--primary), var(--primary-container)) 1;
 }
 
 .dashboard-card.clickable {
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s;
+  display: block;
 }
 
 .dashboard-card.clickable:hover {
-  border-color: #3498db;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: var(--surface-container);
 }
 
 .dashboard-card h3 {
+  font-family: 'Manrope', system-ui, sans-serif;
   margin: 0 0 12px 0;
-  font-size: 14px;
-  color: #7f8c8d;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .stat-number {
+  font-family: 'Manrope', system-ui, sans-serif;
   font-size: 36px;
-  font-weight: 700;
-  color: #2c3e50;
+  font-weight: 800;
+  color: var(--on-surface);
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .dashboard-card p {
   margin: 0;
   font-size: 13px;
-  color: #95a5a6;
+  color: var(--secondary);
 }
 
+/* Info Sections */
 .info-section {
-  background: white;
-  border-radius: 8px;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
   padding: 20px;
-  border: 1px solid #ddd;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 4rem;
 }
 
 .info-section h3 {
+  font-family: 'Manrope', system-ui, sans-serif;
   margin: 0 0 16px 0;
-  color: #2c3e50;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
 }
 
-/* Role Test Section */
+/* Current User Section */
 .role-test {
-  background: #f8f9fa;
+  background: var(--surface-container);
 }
 
 .user-test-info p {
   margin: 0 0 8px 0;
   font-size: 14px;
-  color: #2c3e50;
+  color: var(--on-surface);
 }
 
 .user-test-info .hint {
-  margin-top: 16px;
-  padding: 12px;
-  background: #e8f4fc;
-  border-radius: 4px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(161,212,148,0.15);
+  border-radius: var(--radius-md);
   font-size: 13px;
-  color: #2980b9;
+  color: var(--primary);
 }
 
-.user-test-info code {
-  background: rgba(0,0,0,0.1);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-/* Role badges */
+/* Role badges in dashboard — all unified neutral */
 .role-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 9999px;
   font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 4px;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
 .role-badge.member {
-  background: #95a5a6;
-  color: white;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
 .role-badge.organizer {
-  background: #f39c12;
-  color: white;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
 .role-badge.admin {
-  background: #e74c3c;
-  color: white;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
 /* Upcoming Events Section */
 .upcoming-events {
-  margin-bottom: 24px;
+  margin-bottom: 4rem;
 }
 
 .section-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .section-header-row h3 {
+  font-family: 'Manrope', system-ui, sans-serif;
   margin: 0;
+  font-weight: 700;
 }
 
 .view-all-link {
-  color: #3498db;
+  color: var(--primary);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .view-all-link:hover {
@@ -161,17 +165,17 @@
 .mini-event-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-md);
   text-decoration: none;
   color: inherit;
-  transition: all 0.2s;
+  transition: background 0.15s;
 }
 
 .mini-event-item:hover {
-  background: #ecf0f1;
+  background: var(--surface-container);
 }
 
 .mini-event-date {
@@ -179,24 +183,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
 .mini-event-date .day {
-  font-size: 18px;
-  font-weight: 700;
-  color: #2c3e50;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: white;
   line-height: 1;
 }
 
 .mini-event-date .month {
   font-size: 10px;
-  color: #7f8c8d;
+  color: rgba(255,255,255,0.8);
   text-transform: uppercase;
 }
 
@@ -208,22 +212,23 @@
 .mini-event-name {
   display: block;
   font-weight: 500;
-  color: #2c3e50;
+  font-size: 13px;
+  color: var(--on-surface);
   margin-bottom: 2px;
 }
 
 .mini-event-location {
   display: block;
-  font-size: 13px;
-  color: #7f8c8d;
+  font-size: 12px;
+  color: var(--secondary);
 }
 
 .mini-registered-badge {
-  background: #27ae60;
-  color: white;
+  background: var(--surface-container-high);
+  color: var(--secondary);
   font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
   flex-shrink: 0;
 }

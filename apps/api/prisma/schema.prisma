@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum OrgLevel {
+  FEDERAL
+  STATE
+  REGION
+  DISTRICT
+  HEGERING
+}
+
+enum OrgRole {
+  MEMBER
+  ORGANIZER
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+// ─── OrgUnit ─────────────────────────────────────────────────────────────────
+
+model OrgUnit {
+  id       String   @id @default(cuid())
+  name     String
+  level    OrgLevel
+
+  parentId String?
+  parent   OrgUnit?  @relation("OrgUnitChildren", fields: [parentId], references: [id])
+  children OrgUnit[] @relation("OrgUnitChildren")
+
+  // members in this org unit
+  members  UserOrgUnit[]
+
+  // events scoped to this org unit
+  events   Event[]
+
+  // user functions linked to this org unit
+  userFunctions UserFunction[]
+
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([parentId])
+  @@index([level])
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String   @default("")
+  lastName     String   @default("")
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  tokenVersion Int      @default(0)
+
+  // Profile (1:1)
+  profile      UserProfile?
+
+  // Org memberships
+  orgUnits     UserOrgUnit[]
+
+  // Events created by this user
+  createdEvents Event[] @relation("EventCreatedBy")
+
+  // Registrations
+  registrations Registration[]
+
+  // Event role assignments
+  eventRoleAssignments UserEventRole[] @relation("UserEventRoles")
+  assignedEventRoles   UserEventRole[] @relation("AssignedBy")
+
+  // Functions & Awards
+  functions    UserFunction[]
+  awards       UserAward[]
+
+  // Audit logs
+  auditLogs    AuditLog[]
+
+  // Dogs
+  dogs         UserDog[]
+
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([email])
+  @@index([isAdmin])
+  @@index([isActive])
+}
+
+// ─── UserProfile (PII) ────────────────────────────────────────────────────────
+
+model UserProfile {
+  userId String @id
+
+  // Personal
+  anrede       String?
+  titel        String?
+  geschlecht   String?
+  briefanrede  String?
+  berufsgruppe String?
+  geburtsort   String?
+  geburtsdatum DateTime? @db.Date
+  nationalitaet String?  @default("Deutschland")
+
+  // Contact
+  telefonPrivat      String?
+  telefonDienstlich  String?
+  telefonHandy       String?
+
+  // Primary address
+  strasse    String?
+  hausnummer String?
+  plz        String?
+  ort        String?
+  land       String? @default("Deutschland")
+
+  // Optional postal address
+  postfachStrasse String?
+  postfachPlz     String?
+  postfachOrt     String?
+
+  // Hunting / professional
+  jaegereichennummer     String?
+  ersteWaffenbesitzkarte DateTime? @db.Date
+  jaegerpruefungDatum    DateTime? @db.Date
+  huntingLicenseDate     DateTime? @db.Date
+  mitgliedJagdverbandSeit Int?
+
+  // Admin-only
+  externeMitgliedsnummer String?
+  bemerkungen            String?
+  istExternesMitglied    Boolean  @default(false)
+
+  // Qualifications (JSON blob)
+  qualifications Json @default("{}")
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── UserOrgUnit (junction) ───────────────────────────────────────────────────
+
+model UserOrgUnit {
+  id        String   @id @default(cuid())
+  userId    String
+  orgUnitId String
+  role      OrgRole  @default(MEMBER)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgUnit OrgUnit @relation(fields: [orgUnitId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, orgUnitId])
+  @@index([userId])
+  @@index([orgUnitId])
+  @@index([role])
+}
+
+// ─── Event ────────────────────────────────────────────────────────────────────
+
+model Event {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  location    String?
+  startDate   DateTime
+  endDate     DateTime
+
+  scopeOrgId String
+  scopeOrg   OrgUnit @relation(fields: [scopeOrgId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("EventCreatedBy", fields: [createdById], references: [id])
+
+  isPublished Boolean @default(false)
+
+  groups        Group[]
+  eventRoles    EventRole[]
+  registrations Registration[]
+
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([scopeOrgId])
+  @@index([isPublished])
+  @@index([startDate, endDate])
+  @@index([createdById])
+}
+
+// ─── Group ────────────────────────────────────────────────────────────────────
+
+model Group {
+  id        String    @id @default(cuid())
+  eventId   String
+  name      String
+  capacity  Int
+  startTime DateTime?
+
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrations Registration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+}
+
+// ─── Registration ─────────────────────────────────────────────────────────────
+
+model Registration {
+  id           String             @id @default(cuid())
+  userId       String
+  eventId      String
+  groupId      String?
+  status       RegistrationStatus @default(CONFIRMED)
+  registeredAt DateTime           @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@index([groupId])
+  @@index([status])
+}
+
+// ─── EventRole ────────────────────────────────────────────────────────────────
+
+model EventRole {
+  id          String  @id @default(cuid())
+  eventId     String
+  name        String
+  description String?
+
+  event       Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignments UserEventRole[]
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+}
+
+// ─── UserEventRole ────────────────────────────────────────────────────────────
+
+model UserEventRole {
+  id           String @id @default(cuid())
+  userId       String
+  eventRoleId  String
+  assignedById String
+
+  user        User      @relation("UserEventRoles", fields: [userId], references: [id], onDelete: Cascade)
+  eventRole   EventRole @relation(fields: [eventRoleId], references: [id], onDelete: Cascade)
+  assignedBy  User      @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@unique([userId, eventRoleId])
+  @@index([userId])
+  @@index([eventRoleId])
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+}
+
+// ─── UserFunction ─────────────────────────────────────────────────────────────
+
+model UserFunction {
+  id          String    @id @default(cuid())
+  userId      String
+  funktion    String
+  orgUnitName String?
+  orgUnitId   String?
+  von         DateTime? @db.Date
+  bis         DateTime? @db.Date
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgUnit OrgUnit? @relation(fields: [orgUnitId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([orgUnitId])
+}
+
+// ─── UserDog ──────────────────────────────────────────────────────────────────
+
+model UserDog {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  rasse       String?
+  geburtsjahr Int?
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pruefungen UserDogPruefung[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── UserDogPruefung ──────────────────────────────────────────────────────────
+
+model UserDogPruefung {
+  id           String    @id @default(cuid())
+  dogId        String
+  pruefungsart String
+  datum        DateTime? @db.Date
+
+  dog UserDog @relation(fields: [dogId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([dogId])
+}
+
+// ─── UserAward ────────────────────────────────────────────────────────────────
+
+model UserAward {
+  id          String    @id @default(cuid())
+  userId      String
+  bezeichnung String
+  datum       DateTime? @db.Date
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { orgUnits, orgUnitLevels, buildTree } from '../../data/mockData';
+import { orgUnitLevels, buildTree, qualificationLabels } from '../../data/mockData';
+import { useSupabaseProfile } from '../../hooks/useSupabaseProfile';
 import HintButton from '../HintButton/HintButton';
 import './Profile.css';
 
@@ -8,21 +9,42 @@ import './Profile.css';
  * Profile Component
  *
  * Displays user profile with:
- * - Personal data (view + edit)
- * - OrgUnit memberships with multi-selection
+ * - Personal data (view + edit), including J. Jagdscheinausstellung + J. Mitglied Jagdverband
+ * - Qualifications (self-editable)
  * - Funktionen and Ehrungen (read-only, managed by organizer/admin)
- * - Validation (no duplicates)
+ * - OrgUnit memberships with multi-selection
  */
+
+const defaultQualifications = {
+  jagdpaechter: false,
+  begegnungsscheininhaber: false,
+  hundefuehrer: false,
+  hundpruefungsarten: [],
+  bestaetigterJagdaufseher: false,
+  fallenlehrgang: false,
+  jagdhorn: false,
+  drohnenfuehrerschein: false,
+  schiessleistungsnadel: '',
+};
+
 function Profile() {
-  const { user, isAdmin, isOrganizer, updateMemberships, updateProfile } = useAuth();
+  const { user, isAdmin, isOrganizer, updateMemberships, updateProfile, orgUnits } = useAuth();
+  const { loadProfile, saveProfile, loadDogs, saveDog, deleteDog, saving, error: supabaseError } = useSupabaseProfile();
+  const [dogs, setDogs] = useState([]);
+  const [newDog, setNewDog] = useState({ name: '', rasse: '', geburtsjahr: '' });
+  const [dogDeleteConfirm, setDogDeleteConfirm] = useState(null);
   const [isEditingMemberships, setIsEditingMemberships] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingQualifications, setIsEditingQualifications] = useState(false);
   const [selectedOrgUnits, setSelectedOrgUnits] = useState(
     user.memberships.map(m => m.orgUnitId)
   );
+  const mountedRef = useRef(true);
 
   const buildInitialForm = () => ({
     email: user.email,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
     anrede: user.profile.anrede || '',
     titel: user.profile.titel || '',
     briefanrede: user.profile.briefanrede || '',
@@ -44,12 +66,72 @@ function Profile() {
     postLand: user.profile.postLand || 'Deutschland',
     dateOfBirth: user.profile.dateOfBirth || '',
     gender: user.profile.gender || '',
+    huntingLicenseYear: user.profile.huntingLicenseDate
+      ? String(new Date(user.profile.huntingLicenseDate).getFullYear())
+      : '',
+    mitgliedJagdverbandSeit: user.profile.mitgliedJagdverbandSeit
+      ? String(user.profile.mitgliedJagdverbandSeit)
+      : '',
+  });
+
+  const buildInitialQualifications = () => ({
+    ...defaultQualifications,
+    ...(user.profile.qualifications || {}),
   });
 
   const [profileForm, setProfileForm] = useState(buildInitialForm);
+  const [qualificationsForm, setQualificationsForm] = useState(buildInitialQualifications);
   const [error, setError] = useState(null);
   const [profileError, setProfileError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // Load profile from Supabase on mount, merge into context
+  useEffect(() => {
+    mountedRef.current = true;
+    let cancelled = false;
+
+    async function fetchProfile() {
+      const [result, userDogs] = await Promise.all([
+        loadProfile(user.id),
+        loadDogs(user.id),
+      ]);
+      if (cancelled || !mountedRef.current) return;
+      if (userDogs) setDogs(userDogs);
+      if (result && result.profile) {
+        const merged = {};
+        for (const [key, val] of Object.entries(result.profile)) {
+          if (val !== null && val !== undefined) {
+            merged[key] = val;
+          }
+        }
+        if (Object.keys(merged).length > 0) {
+          updateProfile({ profile: merged });
+
+          // Update form fields, converting special fields
+          const formUpdate = { ...merged };
+          if (merged.huntingLicenseDate) {
+            const year = new Date(merged.huntingLicenseDate).getFullYear();
+            formUpdate.huntingLicenseYear = isNaN(year) ? '' : String(year);
+          }
+          if (merged.mitgliedJagdverbandSeit !== undefined) {
+            formUpdate.mitgliedJagdverbandSeit = merged.mitgliedJagdverbandSeit
+              ? String(merged.mitgliedJagdverbandSeit)
+              : '';
+          }
+          setProfileForm(prev => ({ ...prev, ...formUpdate }));
+
+          // Update qualifications separately
+          if (merged.qualifications) {
+            setQualificationsForm(prev => ({ ...defaultQualifications, ...prev, ...merged.qualifications }));
+          }
+        }
+      }
+    }
+
+    fetchProfile();
+    return () => { cancelled = true; mountedRef.current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
 
   const tree = buildTree(orgUnits);
 
@@ -98,40 +180,72 @@ function Profile() {
     setProfileError(null);
   };
 
-  const handleSaveProfile = () => {
+  const handleQualificationChange = (key, value) => {
+    setQualificationsForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveProfile = async () => {
     if (!profileForm.email.trim()) {
       setProfileError('E-Mail ist erforderlich');
       return;
     }
+
+    const huntingLicenseDate = profileForm.huntingLicenseYear
+      ? `${profileForm.huntingLicenseYear}-01-01`
+      : null;
+
+    const mitgliedJagdverbandSeit = profileForm.mitgliedJagdverbandSeit
+      ? parseInt(profileForm.mitgliedJagdverbandSeit, 10)
+      : null;
+
+    const profileData = {
+      anrede: profileForm.anrede,
+      titel: profileForm.titel,
+      briefanrede: profileForm.briefanrede,
+      berufsgruppe: profileForm.berufsgruppe,
+      geburtsort: profileForm.geburtsort,
+      nationalitaet: profileForm.nationalitaet,
+      telefonPrivat: profileForm.telefonPrivat,
+      telefonDienstlich: profileForm.telefonDienstlich,
+      handy: profileForm.handy,
+      street: profileForm.street,
+      postalCode: profileForm.postalCode,
+      city: profileForm.city,
+      land: profileForm.land,
+      postStrasse: profileForm.postStrasse,
+      postPlz: profileForm.postPlz,
+      postOrt: profileForm.postOrt,
+      dateOfBirth: profileForm.dateOfBirth,
+      gender: profileForm.gender,
+      huntingLicenseDate,
+      mitgliedJagdverbandSeit,
+    };
+
+    // Save to Supabase (non-blocking: local state updates even if DB fails)
+    const result = await saveProfile(user.id, profileData);
+
+    // Always update local context so UI stays consistent
     updateProfile({
       email: profileForm.email,
       profile: {
-        anrede: profileForm.anrede,
-        titel: profileForm.titel,
-        briefanrede: profileForm.briefanrede,
-        berufsgruppe: profileForm.berufsgruppe,
-        geburtsort: profileForm.geburtsort,
-        nationalitaet: profileForm.nationalitaet,
-        telefonPrivat: profileForm.telefonPrivat,
-        telefonDienstlich: profileForm.telefonDienstlich,
-        handy: profileForm.handy,
-        street: profileForm.street,
-        postalCode: profileForm.postalCode,
-        city: profileForm.city,
-        land: profileForm.land,
+        ...profileData,
         bezirk: profileForm.bezirk,
         hasPostalAddress: profileForm.hasPostalAddress,
-        postStrasse: profileForm.postStrasse,
-        postPlz: profileForm.postPlz,
-        postOrt: profileForm.postOrt,
         postLand: profileForm.postLand,
-        dateOfBirth: profileForm.dateOfBirth,
-        gender: profileForm.gender,
       }
     });
+
     setIsEditingProfile(false);
     setProfileError(null);
-    setSuccessMessage('Profil erfolgreich aktualisiert');
+
+    if (result.success) {
+      setSuccessMessage('Profil erfolgreich gespeichert');
+    } else if (result.error) {
+      setSuccessMessage('Profil lokal aktualisiert (Datenbank nicht erreichbar)');
+      console.warn('Supabase save failed:', result.error);
+    } else {
+      setSuccessMessage('Profil erfolgreich aktualisiert');
+    }
     setTimeout(() => setSuccessMessage(null), 3000);
   };
 
@@ -139,6 +253,25 @@ function Profile() {
     setProfileForm(buildInitialForm());
     setIsEditingProfile(false);
     setProfileError(null);
+  };
+
+  const handleSaveQualifications = async () => {
+    const result = await saveProfile(user.id, { qualifications: qualificationsForm });
+    updateProfile({ profile: { qualifications: qualificationsForm } });
+    setIsEditingQualifications(false);
+    if (result.success) {
+      setSuccessMessage('Qualifikationen gespeichert');
+    } else if (result.error) {
+      setSuccessMessage('Qualifikationen lokal aktualisiert (Datenbank nicht erreichbar)');
+    } else {
+      setSuccessMessage('Qualifikationen erfolgreich aktualisiert');
+    }
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleCancelQualificationsEdit = () => {
+    setQualificationsForm(buildInitialQualifications());
+    setIsEditingQualifications(false);
   };
 
   const genderLabel = (g) => {
@@ -153,11 +286,37 @@ function Profile() {
     try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
   };
 
+  const formatYear = (d) => {
+    if (!d) return '—';
+    try { return String(new Date(d).getFullYear()); } catch { return d; }
+  };
+
   const formatFunktionDates = (f) => {
     const von = formatDate(f.vonDatum);
     const bis = f.bisDatum ? formatDate(f.bisDatum) : 'heute';
     return `${von} – ${bis}`;
   };
+
+  // Build qualification display tags
+  const getQualTags = (quals) => {
+    const tags = [];
+    const booleanKeys = ['jagdpaechter','begegnungsscheininhaber','hundefuehrer',
+      'bestaetigterJagdaufseher','fallenlehrgang','jagdhorn','drohnenfuehrerschein'];
+    for (const key of booleanKeys) {
+      if (quals[key]) tags.push(qualificationLabels[key]);
+    }
+    if (quals.hundpruefungsarten?.length > 0) {
+      tags.push(quals.hundpruefungsarten.join(', '));
+    }
+    if (quals.schiessleistungsnadel) {
+      const level = quals.schiessleistungsnadel;
+      tags.push(`Schießleistungsnadel (${level.charAt(0).toUpperCase() + level.slice(1)})`);
+    }
+    return tags;
+  };
+
+  const currentQualifications = user.profile?.qualifications || {};
+  const qualTags = getQualTags(currentQualifications);
 
   const funktionen = user.funktionen || [];
   const ehrungen = user.ehrungen || [];
@@ -207,12 +366,21 @@ function Profile() {
 
         {successMessage && <div className="success-message">{successMessage}</div>}
         {profileError && <div className="error-message">{profileError}</div>}
+        {supabaseError && <div className="error-message">{supabaseError}</div>}
 
         {!isEditingProfile ? (
           <div className="profile-view">
             <div className="profile-subsection">
               <h4>Anrede & Identität</h4>
               <div className="profile-grid">
+                <div className="profile-field">
+                  <label>Vorname</label>
+                  <span>{user.firstName || '—'}</span>
+                </div>
+                <div className="profile-field">
+                  <label>Nachname</label>
+                  <span>{user.lastName || '—'}</span>
+                </div>
                 <div className="profile-field">
                   <label>Anrede</label>
                   <span>{user.profile.anrede || '—'}</span>
@@ -246,8 +414,12 @@ function Profile() {
                   <span>{genderLabel(user.profile.gender)}</span>
                 </div>
                 <div className="profile-field">
-                  <label>Jagdschein seit</label>
-                  <span>{user.profile.huntingLicenseDate ? formatDate(user.profile.huntingLicenseDate) : '—'}</span>
+                  <label>J. Jagdscheinausstellung</label>
+                  <span>{formatYear(user.profile.huntingLicenseDate)}</span>
+                </div>
+                <div className="profile-field">
+                  <label>J. Mitglied Jagdverband</label>
+                  <span>{user.profile.mitgliedJagdverbandSeit || '—'}</span>
                 </div>
               </div>
             </div>
@@ -312,6 +484,14 @@ function Profile() {
               <h4>Anrede & Identität</h4>
               <div className="form-grid">
                 <div className="form-group">
+                  <label htmlFor="firstName">Vorname</label>
+                  <input type="text" id="firstName" name="firstName" value={profileForm.firstName} onChange={handleProfileChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="lastName">Nachname</label>
+                  <input type="text" id="lastName" name="lastName" value={profileForm.lastName} onChange={handleProfileChange} />
+                </div>
+                <div className="form-group">
                   <label htmlFor="anrede">Anrede</label>
                   <select id="anrede" name="anrede" value={profileForm.anrede} onChange={handleProfileChange}>
                     <option value="">—</option>
@@ -351,6 +531,32 @@ function Profile() {
                     <option value="female">Weiblich</option>
                     <option value="other">Divers</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="huntingLicenseYear">J. Jagdscheinausstellung</label>
+                  <input
+                    type="number"
+                    id="huntingLicenseYear"
+                    name="huntingLicenseYear"
+                    value={profileForm.huntingLicenseYear}
+                    onChange={handleProfileChange}
+                    min="1900"
+                    max="2099"
+                    placeholder="z.B. 2010"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="mitgliedJagdverbandSeit">J. Mitglied Jagdverband</label>
+                  <input
+                    type="number"
+                    id="mitgliedJagdverbandSeit"
+                    name="mitgliedJagdverbandSeit"
+                    value={profileForm.mitgliedJagdverbandSeit}
+                    onChange={handleProfileChange}
+                    min="1900"
+                    max="2099"
+                    placeholder="z.B. 2012"
+                  />
                 </div>
               </div>
             </div>
@@ -430,18 +636,71 @@ function Profile() {
             </div>
 
             <div className="editor-actions">
-              <button className="save-btn" onClick={handleSaveProfile}>Speichern</button>
-              <button className="cancel-btn" onClick={handleCancelProfileEdit}>Abbrechen</button>
+              <button className="save-btn" onClick={handleSaveProfile} disabled={saving}>
+                {saving ? 'Speichern...' : 'Speichern'}
+              </button>
+              <button className="cancel-btn" onClick={handleCancelProfileEdit} disabled={saving}>Abbrechen</button>
             </div>
           </div>
         )}
       </section>
 
-      {/* Funktionen — read-only in self-edit, managed by organizer/admin */}
+      {/* Qualifikationen — editable by self */}
+      <section className="profile-section">
+        <div className="section-header">
+          <h3>Qualifikationen</h3>
+          {!isEditingQualifications && (
+            <button className="edit-btn" onClick={() => setIsEditingQualifications(true)}>
+              Bearbeiten
+            </button>
+          )}
+        </div>
+
+        {!isEditingQualifications ? (
+          <div className="profile-view">
+            {qualTags.length === 0 ? (
+              <p className="profile-empty">Keine Qualifikationen eingetragen.</p>
+            ) : (
+              <div className="qual-tags-view">
+                {qualTags.map((tag, i) => <span key={i} className="qual-tag">{tag}</span>)}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="qual-edit-form">
+            <div className="form-subsection">
+              <h4>Qualifikationen</h4>
+              <div className="qual-checkboxes">
+                {['jagdpaechter','begegnungsscheininhaber','hundefuehrer',
+                  'bestaetigterJagdaufseher','fallenlehrgang','jagdhorn','drohnenfuehrerschein'].map(key => (
+                  <label key={key} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={!!qualificationsForm[key]}
+                      onChange={(e) => handleQualificationChange(key, e.target.checked)}
+                    />
+                    {qualificationLabels[key]}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="editor-actions">
+              <button className="save-btn" onClick={handleSaveQualifications} disabled={saving}>
+                {saving ? 'Speichern...' : 'Speichern'}
+              </button>
+              <button className="cancel-btn" onClick={handleCancelQualificationsEdit} disabled={saving}>Abbrechen</button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Funktionen — read-only, managed by organizer/admin */}
       <section className="profile-section">
         <div className="section-header">
           <h3>Funktionen</h3>
         </div>
+        <p className="profile-managed-hint">Wird durch Organisator oder Administrator verwaltet.</p>
         {funktionen.length === 0 ? (
           <p className="profile-empty">Keine Funktionen eingetragen.</p>
         ) : (
@@ -460,11 +719,12 @@ function Profile() {
         )}
       </section>
 
-      {/* Ehrungen — read-only in self-edit, managed by organizer/admin */}
+      {/* Ehrungen — read-only, managed by organizer/admin */}
       <section className="profile-section">
         <div className="section-header">
           <h3>Ehrungen</h3>
         </div>
+        <p className="profile-managed-hint">Wird durch Organisator oder Administrator verwaltet.</p>
         {ehrungen.length === 0 ? (
           <p className="profile-empty">Keine Ehrungen eingetragen.</p>
         ) : (
@@ -476,6 +736,112 @@ function Profile() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Hunde — member can add/delete dogs; Prüfungen are read-only */}
+      <section className="profile-section">
+        <div className="section-header">
+          <h3>Hunde</h3>
+        </div>
+
+        {dogs.length === 0 && !dogDeleteConfirm && (
+          <p className="profile-empty">Keine Hunde eingetragen.</p>
+        )}
+
+        <div className="dogs-list">
+          {dogs.map(dog => (
+            <div key={dog.id} className="dog-card">
+              <div className="dog-card-header">
+                <div className="dog-card-title">
+                  <strong>{dog.name}</strong>
+                  {dog.rasse && <span className="dog-rasse"> · {dog.rasse}</span>}
+                  {dog.geburtsjahr && <span className="dog-year"> · Jg. {dog.geburtsjahr}</span>}
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setDogDeleteConfirm(dog.id)}
+                  title="Hund entfernen"
+                >
+                  Entfernen
+                </button>
+              </div>
+              <div className="dog-pruefungen">
+                {(dog.pruefungen || []).length === 0
+                  ? <span className="no-tags">Keine Prüfungen</span>
+                  : (dog.pruefungen || []).map(p => (
+                    <span key={p.id} className="pruefung-tag">
+                      {p.pruefungsart}{p.datum ? ` (${new Date(p.datum).getFullYear()})` : ''}
+                    </span>
+                  ))
+                }
+              </div>
+              <p className="profile-managed-hint" style={{ marginTop: '4px', marginBottom: 0 }}>
+                Prüfungen werden durch Organisator oder Administrator eingetragen.
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="dog-add-form">
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Name *"
+            value={newDog.name}
+            onChange={e => setNewDog(prev => ({ ...prev, name: e.target.value }))}
+          />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Rasse"
+            value={newDog.rasse}
+            onChange={e => setNewDog(prev => ({ ...prev, rasse: e.target.value }))}
+          />
+          <input
+            type="number"
+            className="form-input"
+            placeholder="Jahrgang"
+            min="2000" max="2099"
+            value={newDog.geburtsjahr}
+            onChange={e => setNewDog(prev => ({ ...prev, geburtsjahr: e.target.value }))}
+          />
+          <button
+            className="btn btn-secondary btn-sm"
+            disabled={!newDog.name.trim() || saving}
+            onClick={async () => {
+              const result = await saveDog(user.id, {
+                name: newDog.name.trim(),
+                rasse: newDog.rasse.trim() || null,
+                geburtsjahr: newDog.geburtsjahr ? parseInt(newDog.geburtsjahr, 10) : null,
+              });
+              if (result.success) {
+                setDogs(prev => [...prev, { ...result.dog, pruefungen: [] }]);
+                setNewDog({ name: '', rasse: '', geburtsjahr: '' });
+              }
+            }}
+          >
+            + Hund hinzufügen
+          </button>
+        </div>
+
+        {dogDeleteConfirm && (
+          <div className="dialog-overlay" onClick={() => setDogDeleteConfirm(null)}>
+            <div className="dialog" onClick={e => e.stopPropagation()}>
+              <h3>Hund entfernen?</h3>
+              <p>Möchten Sie <strong>{dogs.find(d => d.id === dogDeleteConfirm)?.name}</strong> und alle zugehörigen Prüfungen löschen?</p>
+              <div className="dialog-actions">
+                <button className="btn btn-secondary" onClick={() => setDogDeleteConfirm(null)}>Abbrechen</button>
+                <button className="btn btn-danger" onClick={async () => {
+                  const result = await deleteDog(dogDeleteConfirm);
+                  if (result.success) {
+                    setDogs(prev => prev.filter(d => d.id !== dogDeleteConfirm));
+                  }
+                  setDogDeleteConfirm(null);
+                }}>Löschen</button>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 

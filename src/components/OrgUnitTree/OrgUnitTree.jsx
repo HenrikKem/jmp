@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { orgUnits, orgUnitLevels, buildTree, getDescendants } from '../../data/mockData';
+import { orgUnitLevels, buildTree, getDescendants } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 import './OrgUnitTree.css';
 
 /**
@@ -11,6 +12,7 @@ import './OrgUnitTree.css';
  * - Expanding a node shows its descendants (scope)
  */
 function OrgUnitTree() {
+  const { orgUnits } = useAuth();
   const tree = buildTree(orgUnits);
 
   return (
@@ -22,7 +24,7 @@ function OrgUnitTree() {
       </p>
       <div className="tree-container">
         {tree.map(node => (
-          <TreeNode key={node.id} node={node} level={0} />
+          <TreeNode key={node.id} node={node} level={0} allUnits={orgUnits} />
         ))}
       </div>
       <div className="legend">
@@ -41,13 +43,13 @@ function OrgUnitTree() {
   );
 }
 
-function TreeNode({ node, level }) {
+function TreeNode({ node, level, allUnits }) {
   const [isExpanded, setIsExpanded] = useState(level < 2);
   const [showScope, setShowScope] = useState(false);
 
   const hasChildren = node.children && node.children.length > 0;
   const levelInfo = orgUnitLevels[node.level];
-  const descendants = getDescendants(node.id, orgUnits);
+  const descendants = getDescendants(node.id, allUnits);
 
   const toggleExpand = () => {
     if (hasChildren) {
@@ -101,7 +103,7 @@ function TreeNode({ node, level }) {
       {isExpanded && hasChildren && (
         <div className="children">
           {node.children.map(child => (
-            <TreeNode key={child.id} node={child} level={level + 1} />
+            <TreeNode key={child.id} node={child} level={level + 1} allUnits={allUnits} />
           ))}
         </div>
       )}

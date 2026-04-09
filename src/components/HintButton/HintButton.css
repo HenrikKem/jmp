@@ -8,9 +8,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid #3498db;
-  background: white;
-  color: #3498db;
+  border: 2px solid var(--primary-fixed-dim);
+  background: var(--surface-container-lowest);
+  color: var(--primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -25,7 +25,8 @@
 
 .hint-btn:hover,
 .hint-btn.active {
-  background: #3498db;
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
@@ -35,10 +36,11 @@
   width: 320px;
   max-height: 400px;
   overflow-y: auto;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 200;
 }
 
@@ -56,19 +58,21 @@
 
 .hint-popover-title {
   padding: 12px 16px 10px;
-  font-weight: 600;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 700;
   font-size: 14px;
-  color: #2c3e50;
-  border-bottom: 1px solid #eee;
+  color: var(--on-surface);
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .hint-popover-content {
   padding: 12px 16px 16px;
   font-size: 13px;
-  color: #555;
+  color: var(--secondary);
   line-height: 1.5;
 }
 
@@ -86,5 +90,5 @@
 }
 
 .hint-popover-content strong {
-  color: #2c3e50;
+  color: var(--on-surface);
 }

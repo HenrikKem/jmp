@@ -81,20 +81,17 @@ function Dashboard() {
         </section>
       )}
 
-      {/* Role Test Info */}
+      {/* Current User Info */}
       <section className="info-section role-test">
         <h3>Aktueller Benutzer</h3>
         <div className="user-test-info">
+          <p><strong>Name:</strong> {user.name || user.email}</p>
           <p><strong>E-Mail:</strong> {user.email}</p>
           <p>
             <strong>Rollen:</strong>{' '}
             <span className="role-badge member">Mitglied</span>
             {isOrganizer && <span className="role-badge organizer">Organisator</span>}
             {isAdmin && <span className="role-badge admin">Admin</span>}
-          </p>
-          <p className="hint">
-            Der Mock-Benutzer ist Mitglied in "Hegering Münster-Nord" und "Hegering Münster-Süd".
-            Events auf Kreis-Ebene (Münster) und höher sind sichtbar.
           </p>
         </div>
       </section>

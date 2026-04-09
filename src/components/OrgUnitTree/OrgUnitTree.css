@@ -1,28 +1,30 @@
 .org-unit-tree {
-  padding: 20px;
   max-width: 800px;
   margin: 0 auto;
 }
 
 .org-unit-tree h2 {
   margin-bottom: 10px;
-  color: #2c3e50;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--on-surface);
 }
 
 .scope-info {
-  background: #e8f4f8;
-  padding: 12px;
-  border-radius: 6px;
+  background: rgba(161,212,148,0.12);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
   margin-bottom: 20px;
-  font-size: 14px;
-  color: #2c3e50;
+  font-size: 13px;
+  color: var(--primary);
 }
 
 .tree-container {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 16px;
-  background: #fff;
+  background: var(--surface-container-low);
+  box-shadow: var(--shadow-sm);
 }
 
 .tree-node {
@@ -33,13 +35,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s;
 }
 
 .node-content:hover {
-  background: #f5f5f5;
+  background: var(--surface-container);
 }
 
 .node-content.has-children {
@@ -49,79 +51,75 @@
 .expand-icon {
   width: 16px;
   font-size: 10px;
-  color: #666;
+  color: var(--secondary);
   cursor: pointer;
   user-select: none;
 }
 
 .node-name {
   font-weight: 500;
-  color: #333;
+  font-size: 13px;
+  color: var(--on-surface);
 }
 
+/* Level badges — uniform neutral */
 .level-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 9999px;
   font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
+  font-weight: 600;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
-.level-federal {
-  background: #3498db;
-  color: white;
-}
-
-.level-state {
-  background: #9b59b6;
-  color: white;
-}
-
-.level-region {
-  background: #e67e22;
-  color: white;
-}
-
-.level-district {
-  background: #27ae60;
-  color: white;
-}
-
+.level-federal,
+.level-state,
+.level-region,
+.level-district,
 .level-hegering {
-  background: #95a5a6;
-  color: white;
+  background: var(--surface-container-high);
+  color: var(--secondary);
 }
 
 .scope-btn {
   margin-left: auto;
-  padding: 4px 8px;
+  height: 26px;
+  padding: 0 10px;
   font-size: 11px;
-  background: #ecf0f1;
-  border: 1px solid #bdc3c7;
-  border-radius: 4px;
+  font-weight: 600;
+  background: var(--surface-container);
+  border: none;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  font-family: inherit;
+  color: var(--secondary);
 }
 
 .scope-btn:hover {
-  background: #3498db;
+  background: var(--primary);
   color: white;
-  border-color: #3498db;
 }
 
 .scope-popup {
-  background: #fff;
-  border: 1px solid #3498db;
-  border-radius: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin: 8px 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .scope-popup strong {
+  font-family: 'Manrope', system-ui, sans-serif;
   display: block;
   margin-bottom: 8px;
-  color: #2c3e50;
+  color: var(--on-surface);
+  font-size: 13px;
 }
 
 .scope-popup ul {
@@ -136,23 +134,28 @@
   gap: 8px;
   padding: 4px 0;
   font-size: 13px;
+  color: var(--secondary);
 }
 
 .children {
   margin-left: 8px;
-  border-left: 2px solid #ecf0f1;
+  border-left: 2px solid var(--outline-variant);
 }
 
 .legend {
-  margin-top: 24px;
-  padding: 16px;
-  background: #f9f9f9;
-  border-radius: 8px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
 }
 
 .legend h4 {
-  margin: 0 0 12px 0;
-  color: #2c3e50;
+  font-family: 'Manrope', system-ui, sans-serif;
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  text-transform: uppercase;
 }
 
 .legend ul {
@@ -161,7 +164,7 @@
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .legend li {

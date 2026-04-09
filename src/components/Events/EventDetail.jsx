@@ -270,9 +270,11 @@ function EventDetail() {
             <div className="roles-list">
               {eventRoles.map(role => (
                 <div key={role.id} className="role-item">
-                  <span className="role-type-badge">{role.roleType?.name}</span>
+                  <span className="role-type-badge">{role.name}</span>
                   <span className="role-user">
-                    Benutzer {role.userId.replace('user-', '')}
+                    {role.userEventRoles?.length > 0
+                      ? `${role.userEventRoles.length} zugewiesen`
+                      : 'Unbesetzt'}
                   </span>
                 </div>
               ))}
